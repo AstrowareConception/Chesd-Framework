@@ -386,3 +386,64 @@ Lorsque la couche `Analysis` sera développée, le même plan pourra intégrer :
 L'API du bot n'aura pas besoin de changer.
 
 C'est précisément l'intérêt de séparer le **plan** de l'implémentation de l'analyse.
+
+
+---
+
+## 12. Adapter le profil à la phase
+
+Le framework distingue maintenant :
+
+```java
+GamePhase.OPENING
+GamePhase.MIDDLEGAME
+GamePhase.ENDGAME
+```
+
+La phase est estimée à partir du numéro de coup et du matériel restant.
+
+Un bot peut adapter son tempérament :
+
+```java
+@Override
+protected StrategyProfile strategyProfile(BotContext context) {
+    return switch (context.analysis().gamePhase()) {
+        case OPENING -> StrategyProfiles.solid();
+        case MIDDLEGAME -> StrategyProfiles.aggressive();
+        case ENDGAME -> StrategyProfiles.defensive();
+    };
+}
+```
+
+C'est le principe utilisé par `ChameleonBot`.
+
+---
+
+## 13. Limiter une règle à une phase
+
+Une situation peut être gardée :
+
+```java
+Situations.onlyInPhase(
+    GamePhase.MIDDLEGAME,
+    Situations.forkOpportunity()
+)
+```
+
+ou directement :
+
+```java
+Situations.forkOpportunity()
+    .when(context ->
+        context.analysis().gamePhase()
+            == GamePhase.MIDDLEGAME
+    );
+```
+
+L'intérêt est de conserver le type précis de la détection : une `ForkDetection` reste une `ForkDetection`.
+
+Cela permet d'écrire des comportements comme :
+
+- ouvrir solidement ;
+- rechercher les complications tactiques au milieu de jeu ;
+- simplifier et réduire le risque en finale.
