@@ -3,6 +3,7 @@ package fr.astroware.chess.tournament.match;
 import fr.astroware.chess.bots.baseline.ChameleonBot;
 import fr.astroware.chess.bots.baseline.GuardianBot;
 import fr.astroware.chess.bots.baseline.LookaheadBot;
+import fr.astroware.chess.bots.baseline.MinimaxBot;
 import fr.astroware.chess.bots.baseline.PressureBot;
 import fr.astroware.chess.bots.baseline.PositionalBot;
 import fr.astroware.chess.bots.baseline.TacticalBot;
@@ -59,6 +60,32 @@ class ReferenceBotsSmokeTest {
 
         assertFalse(result.playedMoves().isEmpty());
         assertTrue(result.pliesPlayed() <= 6);
+    }
+
+    @Test
+    void lookaheadAndMinimaxCanPlayTogether() {
+        MatchResult result = new MatchRunner().play(
+            LookaheadBot::new,
+            MinimaxBot::new,
+            new MatchConfiguration(
+                4,
+                303030L,
+                java.util.Optional.empty()
+            )
+        );
+
+        assertFalse(result.playedMoves().isEmpty());
+        assertTrue(result.pliesPlayed() <= 4);
+        assertTrue(
+            result.averageDecisionMillis(
+                fr.astroware.chess.core.model.Color.WHITE
+            ) >= 0.0
+        );
+        assertTrue(
+            result.averageDecisionMillis(
+                fr.astroware.chess.core.model.Color.BLACK
+            ) >= 0.0
+        );
     }
 
     @Test
