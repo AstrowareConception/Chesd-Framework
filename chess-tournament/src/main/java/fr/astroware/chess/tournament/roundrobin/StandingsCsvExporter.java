@@ -17,7 +17,7 @@ public final class StandingsCsvExporter {
         StringBuilder csv = new StringBuilder();
 
         csv.append(
-            "rank,bot,author,played,wins,draws,technical_draws,losses,points,average_decision_ms"
+            "rank,bot,author,played,wins,draws,losses,forfeits,technical_draws,points,average_decision_ms"
         ).append(System.lineSeparator());
 
         int rank = 1;
@@ -37,9 +37,11 @@ public final class StandingsCsvExporter {
                 .append(',')
                 .append(standing.draws())
                 .append(',')
-                .append(standing.technicalDraws())
-                .append(',')
                 .append(standing.losses())
+                .append(',')
+                .append(standing.forfeits())
+                .append(',')
+                .append(standing.technicalDraws())
                 .append(',')
                 .append(
                     String.format(
