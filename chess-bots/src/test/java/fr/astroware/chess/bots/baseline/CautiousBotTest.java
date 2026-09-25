@@ -35,8 +35,8 @@ class CautiousBotTest {
                 new Piece(Color.WHITE, PieceType.ROOK),
                 Square.from("d5"),
                 new Piece(Color.BLACK, PieceType.QUEEN),
-                Square.from("d8"),
-                new Piece(Color.BLACK, PieceType.ROOK),
+                Square.from("g8"),
+                new Piece(Color.BLACK, PieceType.BISHOP),
                 Square.from("h8"),
                 new Piece(Color.BLACK, PieceType.ROOK)
             ),
