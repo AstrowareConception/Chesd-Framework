@@ -5,6 +5,8 @@ import fr.astroware.chess.bot.evaluation.EvaluatedMove;
 import fr.astroware.chess.bot.rule.Action;
 import fr.astroware.chess.bot.rule.Detection;
 import fr.astroware.chess.bot.rule.PresenceDetection;
+import fr.astroware.chess.bot.search.MinimaxSearch;
+import fr.astroware.chess.bot.search.SearchSettings;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
 import fr.astroware.chess.bot.situation.detection.DiscoveredAttackDetection;
 import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
@@ -799,6 +801,65 @@ public final class Actions {
                 })
                 .toList();
         };
+    }
+
+
+    /**
+     * Évalue les coups avec une recherche Minimax configurable.
+     *
+     * <p>Le score final est le score Minimax. La description conserve la
+     * variante principale, le nombre de nœuds visités et le nombre de coupures
+     * alpha-bêta afin que le coût de la recherche reste observable.</p>
+     */
+    public static <D extends Detection> Action<D> minimax(
+        SearchSettings settings
+    ) {
+        java.util.Objects.requireNonNull(
+            settings,
+            "settings must not be null"
+        );
+
+        return (context, detections) ->
+            MinimaxSearch.evaluate(
+                context,
+                context.myColor(),
+                settings
+            ).stream()
+                .map(search -> {
+                    double aggression = Math.clamp(
+                        (
+                            search.immediateEvaluation().mobility()
+                                + search.immediateEvaluation()
+                                    .centerControl()
+                        ) / 2.0,
+                        0.0,
+                        10.0
+                    );
+
+                    double safety =
+                        search.immediateEvaluation()
+                            .kingSafety();
+
+                    String explanation =
+                        "Minimax profondeur "
+                            + search.depth()
+                            + ", PV="
+                            + search.principalVariationUci()
+                            + ", nœuds="
+                            + search.nodesVisited()
+                            + ", coupures="
+                            + search.cutoffs();
+
+                    return EvaluatedMove.strategic(
+                        search.move(),
+                        search.score(),
+                        aggression,
+                        safety,
+                        10.0 - safety,
+                        explanation
+                    );
+                })
+                .toList();
     }
 
     private static RiskAssessment assessCaptureRisk(
