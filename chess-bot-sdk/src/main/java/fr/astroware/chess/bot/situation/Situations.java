@@ -1,10 +1,14 @@
 package fr.astroware.chess.bot.situation;
 
 import fr.astroware.chess.bot.analysis.Analysis;
+import fr.astroware.chess.bot.analysis.PositionProjection;
 import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.rule.Situation;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
+import fr.astroware.chess.bot.situation.detection.ForkDetection;
+import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
+import fr.astroware.chess.core.game.GameStatus;
 import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
 import fr.astroware.chess.core.model.Piece;
@@ -106,4 +110,93 @@ public final class Situations {
                 .toList();
         };
     }
+
+    /**
+     * Détecte tous les coups qui terminent immédiatement la partie par mat.
+     */
+    public static Situation<MateInOneDetection> mateInOne() {
+        return context -> {
+            GameStatus winningStatus = context.myColor() == Color.WHITE
+                ? GameStatus.WHITE_WINS
+                : GameStatus.BLACK_WINS;
+
+            return context.legalMoves().stream()
+                .filter(move ->
+                    context.analysis()
+                        .after(move)
+                        .result()
+                        .status() == winningStatus
+                )
+                .map(MateInOneDetection::new)
+                .toList();
+        };
+    }
+
+    /**
+     * Détecte les coups créant une attaque simultanée sur au moins deux
+     * pièces adverses.
+     *
+     * <p>Chaque coup légal est réellement simulé. La détection contient donc
+     * la pièce après son déplacement, ses cibles, leur valeur totale et la
+     * sécurité de l'attaquant dans la position obtenue.</p>
+     */
+    public static Situation<ForkDetection> forkOpportunity() {
+        return context -> {
+            List<ForkDetection> detections = new ArrayList<>();
+            Color opponent = context.myColor().opposite();
+
+            for (Move move : context.legalMoves()) {
+                PositionProjection projection =
+                    context.analysis().after(move);
+
+                Optional<Piece> movedPiece =
+                    projection.position().pieceAt(move.to());
+
+                if (movedPiece.isEmpty()
+                    || movedPiece.orElseThrow().color() != context.myColor()) {
+                    continue;
+                }
+
+                PlacedPiece attacker = new PlacedPiece(
+                    movedPiece.orElseThrow(),
+                    move.to()
+                );
+
+                List<PlacedPiece> targets = projection.analysis()
+                    .attackMap()
+                    .attacksFrom(attacker)
+                    .stream()
+                    .map(square -> projection.position()
+                        .pieceAt(square)
+                        .filter(piece -> piece.color() == opponent)
+                        .map(piece -> new PlacedPiece(piece, square)))
+                    .flatMap(Optional::stream)
+                    .toList();
+
+                if (targets.size() < 2) {
+                    continue;
+                }
+
+                int targetValueSum = targets.stream()
+                    .map(PlacedPiece::piece)
+                    .map(Piece::type)
+                    .mapToInt(projection.analysis().pieceValues()::valueOf)
+                    .sum();
+
+                detections.add(
+                    new ForkDetection(
+                        move,
+                        attacker,
+                        targets,
+                        targetValueSum,
+                        projection.analysis().isAttacked(attacker),
+                        projection.analysis().isDefended(attacker)
+                    )
+                );
+            }
+
+            return List.copyOf(detections);
+        };
+    }
+
 }
