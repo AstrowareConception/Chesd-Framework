@@ -13,12 +13,18 @@ import java.util.Objects;
  * @param color camp ayant joué
  * @param bot identité du bot
  * @param decision décision complète, trace incluse
+ * @param san notation algébrique courte du coup
+ * @param beforeFen position avant le coup
+ * @param afterFen position après le coup
  */
 public record PlayedMove(
     int ply,
     Color color,
     BotMetadata bot,
-    BotDecision decision
+    BotDecision decision,
+    String san,
+    String beforeFen,
+    String afterFen
 ) {
 
     public PlayedMove {
@@ -29,5 +35,12 @@ public record PlayedMove(
         Objects.requireNonNull(color, "color must not be null");
         Objects.requireNonNull(bot, "bot must not be null");
         Objects.requireNonNull(decision, "decision must not be null");
+        Objects.requireNonNull(san, "san must not be null");
+        Objects.requireNonNull(beforeFen, "beforeFen must not be null");
+        Objects.requireNonNull(afterFen, "afterFen must not be null");
+    }
+
+    public int fullMoveNumber() {
+        return (ply + 1) / 2;
     }
 }
