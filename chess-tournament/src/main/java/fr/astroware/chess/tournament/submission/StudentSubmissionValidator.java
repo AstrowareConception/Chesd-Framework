@@ -17,6 +17,8 @@ import java.lang.reflect.Modifier;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashSet;
+import java.util.jar.JarFile;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -294,17 +296,117 @@ public final class StudentSubmissionValidator {
     private static List<Class<? extends ChessBot>>
         discoverStudentBots() {
 
-        Path packageDirectory =
-            studentPackageDirectory();
+        Set<String> classNames =
+            new LinkedHashSet<>();
 
-        if (!Files.isDirectory(
-            packageDirectory
-        )) {
-            return List.of();
+        for (Path entry : classPathEntries()) {
+            if (Files.isDirectory(entry)) {
+                collectFromDirectory(
+                    entry,
+                    classNames
+                );
+            } else if (Files.isRegularFile(entry)
+                && entry.getFileName()
+                    .toString()
+                    .endsWith(".jar")) {
+
+                collectFromJar(
+                    entry,
+                    classNames
+                );
+            }
         }
 
         List<Class<? extends ChessBot>> bots =
-            new ArrayList<>();
+            classNames.stream()
+                .map(StudentSubmissionValidator::loadStudentBot)
+                .flatMap(java.util.Optional::stream)
+                .sorted(
+                    java.util.Comparator.comparing(
+                        Class::getName
+                    )
+                )
+                .toList();
+
+        return List.copyOf(bots);
+    }
+
+    private static List<Path> classPathEntries() {
+        Set<Path> entries =
+            new LinkedHashSet<>();
+
+        addClassPathProperty(
+            entries,
+            System.getProperty(
+                "surefire.test.class.path",
+                ""
+            )
+        );
+
+        addClassPathProperty(
+            entries,
+            System.getProperty(
+                "java.class.path",
+                ""
+            )
+        );
+
+        try {
+            URI codeSource =
+                RandomBot.class
+                    .getProtectionDomain()
+                    .getCodeSource()
+                    .getLocation()
+                    .toURI();
+
+            entries.add(Path.of(codeSource));
+        } catch (Exception exception) {
+            throw new IllegalStateException(
+                "Impossible de localiser le module chess-bots",
+                exception
+            );
+        }
+
+        return List.copyOf(entries);
+    }
+
+    private static void addClassPathProperty(
+        Set<Path> entries,
+        String classPath
+    ) {
+        if (classPath == null
+            || classPath.isBlank()) {
+            return;
+        }
+
+        for (String raw
+            : classPath.split(
+                java.util.regex.Pattern.quote(
+                    java.io.File.pathSeparator
+                )
+            )) {
+
+            if (!raw.isBlank()) {
+                entries.add(Path.of(raw));
+            }
+        }
+    }
+
+    private static void collectFromDirectory(
+        Path classPathRoot,
+        Set<String> classNames
+    ) {
+        Path packageDirectory =
+            classPathRoot.resolve(
+                STUDENT_PACKAGE.replace(
+                    '.',
+                    java.io.File.separatorChar
+                )
+            );
+
+        if (!Files.isDirectory(packageDirectory)) {
+            return;
+        }
 
         try (var paths = Files.walk(packageDirectory)) {
             paths
@@ -319,56 +421,81 @@ public final class StudentSubmissionValidator {
                         .toString()
                         .contains("$")
                 )
-                .forEach(path ->
-                    loadStudentBot(
-                        packageDirectory,
-                        path
-                    ).ifPresent(bots::add)
-                );
+                .forEach(path -> {
+                    Path relative =
+                        packageDirectory.relativize(path);
+
+                    String suffix =
+                        relative.toString()
+                            .replace(
+                                java.io.File.separatorChar,
+                                '.'
+                            )
+                            .replaceAll(
+                                "\\.class$",
+                                ""
+                            );
+
+                    classNames.add(
+                        STUDENT_PACKAGE
+                            + "."
+                            + suffix
+                    );
+                });
         } catch (IOException exception) {
             throw new IllegalStateException(
-                "Impossible de parcourir les classes students",
+                "Impossible de parcourir "
+                    + packageDirectory,
                 exception
             );
         }
+    }
 
-        bots.sort(
-            java.util.Comparator.comparing(
-                Class::getName
-            )
-        );
+    private static void collectFromJar(
+        Path jarPath,
+        Set<String> classNames
+    ) {
+        String prefix =
+            STUDENT_PACKAGE.replace('.', '/')
+                + "/";
 
-        return List.copyOf(bots);
+        try (JarFile jar = new JarFile(
+            jarPath.toFile()
+        )) {
+            jar.stream()
+                .map(java.util.jar.JarEntry::getName)
+                .filter(name ->
+                    name.startsWith(prefix)
+                )
+                .filter(name ->
+                    name.endsWith(".class")
+                )
+                .filter(name ->
+                    !name.contains("$")
+                )
+                .forEach(name ->
+                    classNames.add(
+                        name.substring(
+                            0,
+                            name.length()
+                                - ".class".length()
+                        ).replace('/', '.')
+                    )
+                );
+        } catch (IOException exception) {
+            throw new IllegalStateException(
+                "Impossible de parcourir le JAR "
+                    + jarPath,
+                exception
+            );
+        }
     }
 
     private static java.util.Optional<
         Class<? extends ChessBot>>
         loadStudentBot(
-            Path packageDirectory,
-            Path classFile
+            String className
         ) {
-
-        Path relative =
-            packageDirectory.relativize(
-                classFile
-            );
-
-        String suffix =
-            relative.toString()
-                .replace(
-                    java.io.File.separatorChar,
-                    '.'
-                )
-                .replaceAll(
-                    "\\.class$",
-                    ""
-                );
-
-        String className =
-            STUDENT_PACKAGE
-                + (suffix.isBlank()
-                    ? ""
-                    : "." + suffix);
 
         try {
             Class<?> raw =
@@ -390,30 +517,6 @@ public final class StudentSubmissionValidator {
             throw new IllegalStateException(
                 "Classe introuvable : "
                     + className,
-                exception
-            );
-        }
-    }
-
-    private static Path studentPackageDirectory() {
-        try {
-            URI root =
-                RandomBot.class
-                    .getProtectionDomain()
-                    .getCodeSource()
-                    .getLocation()
-                    .toURI();
-
-            return Path.of(root)
-                .resolve(
-                    STUDENT_PACKAGE.replace(
-                        '.',
-                        java.io.File.separatorChar
-                    )
-                );
-        } catch (Exception exception) {
-            throw new IllegalStateException(
-                "Impossible de localiser chess-bots/target/classes",
                 exception
             );
         }
