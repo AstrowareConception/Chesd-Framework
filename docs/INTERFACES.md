@@ -228,3 +228,36 @@ result.playedMoves();
 ```
 
 Le même résultat sert à la console, au PGN et au viewer graphique.
+
+---
+
+## 10. Mode tournoi
+
+Le CLI permet aussi un tournoi toutes rondes :
+
+```bash
+mvn exec:java -Dexec.args="tournament random greedy tactical"
+```
+
+Tous les bots :
+
+```bash
+mvn exec:java -Dexec.args="tournament --all"
+```
+
+Options principales :
+
+```text
+--games=N
+--seed=N
+--max-plies=N
+--pgn=parties.pgn
+--csv=classement.csv
+```
+
+Le classement affiche également le temps moyen de décision de chaque bot.
+
+Voir `docs/TOURNAMENT.md`.
+
+
+Chaque coup conserve également son temps de décision en millisecondes. La console et le viewer Swing affichent cette information pour comparer le coût des stratégies.
