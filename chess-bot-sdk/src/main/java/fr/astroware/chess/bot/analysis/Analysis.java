@@ -51,6 +51,12 @@ public interface Analysis {
     List<SkewerPattern> skewersBy(Color color);
 
     /**
+     * Défenseurs du camp indiqué qui sont l'unique défenseur d'au moins deux
+     * pièces actuellement attaquées par le camp adverse.
+     */
+    List<OverloadedDefenderPattern> overloadedDefenders(Color color);
+
+    /**
      * Simule un coup légal et retourne une nouvelle position entièrement
      * analysable, sans modifier la partie réelle.
      */
