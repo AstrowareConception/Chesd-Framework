@@ -10,9 +10,6 @@ import java.util.List;
 
 /**
  * Façade d'analyse de la position mise à disposition des bots.
- *
- * <p>Cette couche expose des faits réutilisables. Elle ne décide pas de la
- * stratégie à adopter : c'est le rôle des règles, actions, plans et profils.</p>
  */
 public interface Analysis {
 
@@ -37,6 +34,21 @@ public interface Analysis {
     List<Move> captures();
 
     PieceValues pieceValues();
+
+    /**
+     * Indique si le roi du camp au trait est actuellement en échec.
+     */
+    boolean isKingAttacked();
+
+    /**
+     * Clouages absolus exercés par le camp indiqué.
+     */
+    List<PinPattern> pinsBy(Color color);
+
+    /**
+     * Enfilades exercées par le camp indiqué.
+     */
+    List<SkewerPattern> skewersBy(Color color);
 
     /**
      * Simule un coup légal et retourne une nouvelle position entièrement
