@@ -581,3 +581,57 @@ settings.withoutAlphaBeta();
 ```
 
 Les traces affichent la variante principale, les nœuds visités et les coupures.
+
+
+---
+
+## 18. Promotion et roque
+
+Les coups spéciaux sont également exposés comme des situations typées.
+
+### Promotion
+
+```java
+rule(
+    "Promouvoir",
+    Situations.promotionAvailable(),
+    Actions.playBestPromotion()
+)
+```
+
+`promotionAvailable()` retourne une détection pour chaque promotion légale : dame, tour, fou ou cavalier.
+
+`playBestPromotion()` tient compte :
+
+- de la valeur de la pièce obtenue ;
+- de l'attaque éventuelle de la case de promotion ;
+- de la défense de la pièce promue.
+
+La dame est donc généralement privilégiée, sans coder en dur « toujours dame » dans la situation.
+
+### Roque
+
+```java
+rule(
+    "Mettre le roi à l'abri",
+    Situations.castlingAvailable(),
+    Actions.playBestCastle()
+)
+```
+
+La situation ne retourne que les roques réellement légaux selon le moteur : droits de roque, cases libres, échec et cases traversées sont déjà contrôlés par le moteur de règles.
+
+Lorsque petit et grand roque sont tous les deux possibles, `playBestCastle()` compare les positions obtenues et prend notamment en compte la sécurité du roi.
+
+Ces deux règles peuvent être combinées avec les phases :
+
+```java
+rule(
+    "Roquer en ouverture",
+    Situations.onlyInPhase(
+        GamePhase.OPENING,
+        Situations.castlingAvailable()
+    ),
+    Actions.playBestCastle()
+)
+```
