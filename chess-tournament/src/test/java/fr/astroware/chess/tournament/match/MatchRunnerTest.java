@@ -33,6 +33,38 @@ class MatchRunnerTest {
     }
 
     @Test
+    void recordsDecisionTimes() {
+        MatchResult result = new MatchRunner().play(
+            RandomBot::new,
+            RandomBot::new,
+            new MatchConfiguration(
+                4,
+                7L,
+                java.util.Optional.empty()
+            )
+        );
+
+        assertFalse(result.playedMoves().isEmpty());
+
+        assertFalse(
+            result.playedMoves().stream()
+                .anyMatch(move -> move.decisionNanos() < 0L)
+        );
+
+        assertFalse(
+            result.averageDecisionMillis(
+                fr.astroware.chess.core.model.Color.WHITE
+            ) < 0.0
+        );
+
+        assertFalse(
+            result.maxDecisionMillis(
+                fr.astroware.chess.core.model.Color.BLACK
+            ) < 0.0
+        );
+    }
+
+    @Test
     void sameSeedProducesSameRandomOpeningSequence() {
         MatchConfiguration configuration =
             new MatchConfiguration(12, 12345L, java.util.Optional.empty());
