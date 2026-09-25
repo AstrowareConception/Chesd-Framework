@@ -38,6 +38,12 @@ public interface Analysis {
 
     PieceValues pieceValues();
 
+    /**
+     * Simule un coup légal et retourne une nouvelle position entièrement
+     * analysable, sans modifier la partie réelle.
+     */
+    PositionProjection after(Move move);
+
     static Analysis of(BotContext context) {
         return new DefaultAnalysis(context);
     }
