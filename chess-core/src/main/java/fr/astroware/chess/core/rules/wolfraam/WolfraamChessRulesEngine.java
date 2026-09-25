@@ -7,6 +7,7 @@ import fr.astroware.chess.core.model.PositionView;
 import fr.astroware.chess.core.rules.ChessRulesEngine;
 import fr.astroware.chess.core.rules.IllegalChessMoveException;
 import io.github.wolfraam.chessgame.ChessGame;
+import io.github.wolfraam.chessgame.notation.NotationType;
 import io.github.wolfraam.chessgame.result.ChessGameResultType;
 import io.github.wolfraam.chessgame.result.DrawType;
 
@@ -39,6 +40,21 @@ public final class WolfraamChessRulesEngine implements ChessRulesEngine {
         return game.getLegalMoves().stream()
             .map(WolfraamPosition::toDomain)
             .toList();
+    }
+
+    @Override
+    public String toSan(PositionView position, Move move) {
+        Objects.requireNonNull(move, "move must not be null");
+
+        ChessGame game = unwrap(position);
+        io.github.wolfraam.chessgame.move.Move externalMove =
+            WolfraamPosition.toExternal(move);
+
+        if (!game.isLegalMove(externalMove)) {
+            throw new IllegalChessMoveException(move);
+        }
+
+        return game.getNotation(NotationType.SAN, externalMove);
     }
 
     @Override
