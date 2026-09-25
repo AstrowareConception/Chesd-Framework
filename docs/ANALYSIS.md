@@ -300,3 +300,50 @@ Actions.avoidMateInOne();
 La règle compare les coups qui évitent le mat à l'aide de l'évaluation positionnelle.
 
 Un sacrifice peut être acceptable selon le profil ; offrir un mat immédiat adverse est traité comme une erreur de sécurité.
+
+
+---
+
+## Recherche adversariale à profondeur 2
+
+Le framework sait désormais évaluer un coup en supposant que l'adversaire choisira sa meilleure réponse :
+
+```java
+AdversarialEvaluation evaluation =
+    analysis.adversarialEvaluation(
+        move,
+        Color.WHITE
+    );
+```
+
+Le résultat contient :
+
+```java
+evaluation.immediateEvaluation();
+evaluation.bestReply();
+evaluation.afterReplyEvaluation();
+evaluation.robustScore();
+evaluation.replyCount();
+```
+
+Le principe est :
+
+```text
+mon coup
+  ↓
+toutes les réponses adverses
+  ↓
+évaluation de chaque position
+  ↓
+l'adversaire choisit la réponse qui minimise mon score
+  ↓
+score robuste du coup
+```
+
+Les positions terminales sont traitées explicitement :
+
+- victoire : 10/10 ;
+- défaite : 0/10 ;
+- nulle : 5/10.
+
+Ce mécanisme constitue une première introduction au raisonnement adversarial avant un véritable Minimax.
