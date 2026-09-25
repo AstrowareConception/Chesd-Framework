@@ -25,7 +25,7 @@ Déjà disponibles :
 - [x] bot exemple combinant ouvertures + plans + profil
 - [x] documentation étudiante progressive
 
-La priorité suivante est la **couche d'analyse de position**, indispensable pour rendre les situations tactiques réellement puissantes.
+La priorité suivante est le **workflow étudiant de tournoi** : validation automatique des soumissions, documentation finale et gel du framework avant l'épreuve.
 
 ---
 
@@ -137,7 +137,7 @@ Extensions prévues :
 
 ---
 
-## Phase 4 — Analyse de position — PROCHAINE PRIORITÉ
+## Phase 4 — Analyse de position
 
 Implémenter :
 
@@ -251,7 +251,7 @@ Puis :
 - [x] capture des exceptions de bot / forfait
 - [x] incidents de match structurés
 - [x] compteur de forfaits dans le classement
-- [ ] PGN
+- [x] PGN
 - [x] classement
 - [x] rapport console
 - [x] export PGN multi-parties
@@ -274,13 +274,16 @@ Puis :
 
 ## Phase 10 — Robustesse du tournoi
 
-- [ ] JVM séparée par bot
-- [ ] timeout dur
-- [ ] protocole minimal
+- [x] JVM séparée par bot
+- [x] timeout dur par décision
+- [x] protocole binaire minimal et borné
+- [x] plafond mémoire de la JVM enfant (`-Xmx`)
+- [x] canal loopback authentifié par jeton de session
+- [x] stdout/stderr étudiant séparé du protocole
 - [ ] contrôle des dépendances
 - [ ] limitation réseau/disque
 - [ ] reproductibilité complète
-- [ ] rapport d'incident
+- [x] rapport d'incident
 
 ---
 
