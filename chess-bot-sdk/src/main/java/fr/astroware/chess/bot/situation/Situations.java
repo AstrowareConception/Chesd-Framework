@@ -1,6 +1,7 @@
 package fr.astroware.chess.bot.situation;
 
 import fr.astroware.chess.bot.analysis.Analysis;
+import fr.astroware.chess.bot.analysis.GamePhase;
 import fr.astroware.chess.bot.analysis.OverloadedDefenderPattern;
 import fr.astroware.chess.bot.analysis.PinPattern;
 import fr.astroware.chess.bot.analysis.PositionProjection;
@@ -37,6 +38,42 @@ import java.util.Set;
 public final class Situations {
 
     private Situations() {
+    }
+
+
+    /**
+     * Situation binaire reconnue uniquement dans la phase demandée.
+     */
+    public static Situation<PresenceDetection> inPhase(GamePhase phase) {
+        return context -> context.analysis().gamePhase() == phase
+            ? List.of(PresenceDetection.INSTANCE)
+            : List.of();
+    }
+
+    /**
+     * Garde une situation typée derrière une phase de jeu.
+     *
+     * <p>Le type de détection est conservé, ce qui permet d'associer la même
+     * Action qu'à la situation d'origine.</p>
+     */
+    public static <D extends fr.astroware.chess.bot.rule.Detection>
+        Situation<D> onlyInPhase(
+            GamePhase phase,
+            Situation<D> situation
+        ) {
+
+        java.util.Objects.requireNonNull(
+            phase,
+            "phase must not be null"
+        );
+        java.util.Objects.requireNonNull(
+            situation,
+            "situation must not be null"
+        );
+
+        return situation.when(
+            context -> context.analysis().gamePhase() == phase
+        );
     }
 
     public static Situation<PresenceDetection> always() {
