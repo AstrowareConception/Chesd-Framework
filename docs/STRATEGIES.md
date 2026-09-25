@@ -447,3 +447,51 @@ Cela permet d'écrire des comportements comme :
 - ouvrir solidement ;
 - rechercher les complications tactiques au milieu de jeu ;
 - simplifier et réduire le risque en finale.
+
+
+---
+
+## 14. Plans positionnels
+
+Trois nouveaux plans utilisent directement les métriques d'analyse :
+
+```java
+Plans.improveKingSafety();
+Plans.useOpenFile();
+Plans.createPassedPawn();
+```
+
+Ils peuvent être conditionnés par phase :
+
+```java
+Plans.createPassedPawn()
+    .asRule(
+        Situations.inPhase(GamePhase.ENDGAME)
+    );
+```
+
+### Créer un pion passé
+
+Le plan simule les coups et conserve ceux qui augmentent réellement le nombre de pions passés ou de pions passés protégés.
+
+### Occuper une colonne ouverte
+
+Le plan cherche les déplacements de tour vers une colonne ouverte ou semi-ouverte adaptée à sa couleur.
+
+### Améliorer la sécurité du roi
+
+Le plan conserve les coups qui améliorent effectivement la note de sécurité du roi.
+
+---
+
+## 15. Stratégie purement positionnelle
+
+Le framework fournit aussi :
+
+```java
+Actions.bestPosition();
+```
+
+Cette action simule tous les coups légaux puis transforme la note de `PositionEvaluation` en `EvaluatedMove`.
+
+C'est le principe utilisé par `PositionalBot`.
