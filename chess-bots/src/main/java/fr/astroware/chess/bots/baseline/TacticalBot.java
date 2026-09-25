@@ -48,6 +48,11 @@ public final class TacticalBot extends ChessBot {
                 Actions.bestCheckEscape()
             ),
             rule(
+                "Éviter un mat en un",
+                Situations.mateInOneRisk(),
+                Actions.avoidMateInOne()
+            ),
+            rule(
                 "Sauver une pièce pendue",
                 Situations.hangingOwnPiece(),
                 Actions.moveThreatenedPieceToSafety()
