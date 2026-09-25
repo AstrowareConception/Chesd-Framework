@@ -299,3 +299,45 @@ PGN / viewer / traces / statistiques
 ```
 
 Le moteur de tournoi est maintenant suffisamment structuré pour servir de base à ce processus.
+
+
+---
+
+## 13. Exporter le tournoi
+
+Le mode tournoi peut écrire automatiquement toutes les parties dans un PGN multi-parties :
+
+```bash
+mvn exec:java -Dexec.args="tournament tactical positional minimax --pgn=parties.pgn"
+```
+
+et le classement dans un CSV UTF-8 :
+
+```bash
+mvn exec:java -Dexec.args="tournament tactical positional minimax --csv=classement.csv"
+```
+
+Les deux peuvent être combinés :
+
+```bash
+mvn exec:java -Dexec.args="tournament tactical positional minimax --games=2 --pgn=parties.pgn --csv=classement.csv"
+```
+
+Le PGN contient toutes les parties à la suite.
+
+Le CSV contient notamment :
+
+```text
+rank
+bot
+author
+played
+wins
+draws
+technical_draws
+losses
+points
+average_decision_ms
+```
+
+Cela permet d'archiver un tournoi complet ou d'analyser facilement les résultats dans un tableur.
