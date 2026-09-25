@@ -120,13 +120,13 @@ Les nulles techniques distribuent également 0,5 point à chaque participant mai
 Le rapport console affiche notamment :
 
 ```text
-#    Bot                      Pts    V    N    D    NT  Parties    Moy. ms
-1    Tactical Bot             4.5    4    1    1     0        6       12.4
-2    Positional Bot           3.5    3    1    2     0        6       37.9
-3    Random Bot               1.0    1    0    5     0        6        0.2
+#    Bot                      Pts    V    N    D    F    NT  Parties    Moy. ms
+1    Tactical Bot             4.5    4    1    1    0     0        6       12.4
+2    Positional Bot           3.5    3    1    2    0     0        6       37.9
+3    Random Bot               1.0    1    0    5    0     0        6        0.2
 ```
 
-`NT` signifie **nulle technique**.
+`F` signifie **défaite par forfait** et `NT` signifie **nulle technique**.
 
 Les égalités sont actuellement départagées de manière déterministe par :
 
@@ -334,8 +334,9 @@ author
 played
 wins
 draws
-technical_draws
 losses
+forfeits
+technical_draws
 points
 average_decision_ms
 ```
@@ -382,10 +383,14 @@ incident.message();
 incident.ply();
 ```
 
-Le type actuellement disponible est :
+Les incidents de bot actuellement distingués sont :
 
 ```java
 BOT_EXCEPTION
+BOT_TIMEOUT
+BOT_PROCESS_FAILURE
+BOT_PROTOCOL_ERROR
+BOT_ILLEGAL_MOVE
 ```
 
 Le classement distingue les défaites par forfait des autres défaites.
@@ -402,18 +407,86 @@ Le CSV du classement possède une colonne `forfeits`.
 
 ---
 
-## 15. Limite actuelle : boucle infinie
+## 15. Isolation JVM et timeout dur
 
-Intercepter une exception ne protège pas contre :
+Le framework protège désormais le tournoi contre une boucle infinie ou un bot bloqué.
 
-```java
-while (true) {
-    // ...
-}
+Activez l'isolation :
+
+```bash
+mvn exec:java -Dexec.args="console minimax random --isolated"
 ```
 
-Un timeout réellement dur nécessite d'exécuter le code étudiant dans un processus ou une JVM séparée afin de pouvoir tuer proprement l'exécution fautive.
+ou pour un tournoi complet :
 
-Cette isolation appartient à la phase de robustesse suivante.
+```bash
+mvn exec:java -Dexec.args="tournament positional lookahead minimax --games=2 --isolated"
+```
 
-Un simple timeout sur un thread Java ne serait pas une protection suffisante : un thread bloqué peut continuer à consommer des ressources même après l'annulation de son `Future`.
+Chaque bot d'une partie tourne alors dans une **JVM enfant persistante**, distincte de la JVM du tournoi. Une nouvelle JVM est créée à chaque nouvelle partie : un éventuel état interne ne fuit donc pas d'un match au suivant.
+
+Les limites sont configurables :
+
+```text
+--timeout-ms=2000
+--startup-timeout-ms=5000
+--heap-mb=256
+```
+
+Exemple :
+
+```bash
+mvn exec:java -Dexec.args="tournament tactical positional minimax --isolated --timeout-ms=3000 --heap-mb=256"
+```
+
+Si `ChessBot.decide(...)` dépasse le délai :
+
+```text
+timeout
+  ↓
+fermeture du canal
+  ↓
+Process.destroy()
+  ↓
+Process.destroyForcibly() si nécessaire
+  ↓
+forfait BOT_TIMEOUT
+  ↓
+tournoi poursuivi
+```
+
+Cette protection a un test d'intégration avec un bot volontairement bloqué dans une boucle infinie.
+
+---
+
+## 16. Protocole d'isolation
+
+Le processus enfant ne communique pas via stdout. Le framework ouvre un socket **loopback** dédié et protégé par un jeton de session aléatoire.
+
+Le protocole transporte uniquement les informations nécessaires :
+
+- FEN de la position ;
+- couleur ;
+- coups légaux ;
+- historique ;
+- décision ;
+- trace des règles et candidats évalués.
+
+Les chaînes et listes reçues sont bornées avant allocation. stdout/stderr est drainé séparément et peut donc être utilisé par un étudiant pour du débogage sans corrompre le protocole.
+
+Le heap de la JVM enfant est borné via `-Xmx`.
+
+---
+
+## 17. Limites de l'isolation actuelle
+
+L'isolation de processus apporte un timeout dur et une limite mémoire JVM, mais ce n'est pas encore un sandbox système complet.
+
+Restent notamment à traiter avant un environnement hostile :
+
+- contrôle automatique des dépendances ajoutées ;
+- restrictions réseau sortant ;
+- restrictions d'accès disque ;
+- éventuellement conteneurisation du tournoi final.
+
+Pour un contexte pédagogique où les Pull Requests sont relues et passent la CI, le mécanisme actuel protège déjà le tournoi contre les erreurs, blocages et boucles infinies ordinaires.
