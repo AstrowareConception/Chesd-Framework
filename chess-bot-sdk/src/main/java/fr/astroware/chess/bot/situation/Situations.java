@@ -4,6 +4,7 @@ import fr.astroware.chess.bot.analysis.Analysis;
 import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.rule.Situation;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
+import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
 import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
 import fr.astroware.chess.core.model.Piece;
@@ -25,9 +26,6 @@ public final class Situations {
     private Situations() {
     }
 
-    /**
-     * Situation toujours reconnue.
-     */
     public static Situation<PresenceDetection> always() {
         return context -> List.of(PresenceDetection.INSTANCE);
     }
@@ -37,7 +35,7 @@ public final class Situations {
      * pièce adverse.
      *
      * <p>La prise en passant sera ajoutée lorsque le moteur complet exposera
-     * explicitement cette information.</p>
+     * explicitement cette information dans l'API de domaine.</p>
      */
     public static Situation<CaptureDetection> captureAvailable() {
         return context -> {
@@ -84,14 +82,28 @@ public final class Situations {
         };
     }
 
-    /**
-     * Détecte les captures d'une pièce adverse attaquée mais non défendue.
-     *
-     * <p>Cette définition est volontairement simple et lisible : une pièce est
-     * ici dite "pendue" lorsque sa case est attaquée et qu'aucune autre pièce
-     * de son camp ne défend cette case.</p>
-     */
     public static Situation<CaptureDetection> hangingEnemyPiece() {
         return captureAvailable().filter(CaptureDetection::targetIsHanging);
+    }
+
+    /**
+     * Détecte les pièces du bot actuellement attaquées et non défendues.
+     */
+    public static Situation<ThreatenedPieceDetection> hangingOwnPiece() {
+        return context -> {
+            Analysis analysis = context.analysis();
+
+            return analysis.hangingPieces(context.myColor()).stream()
+                .map(piece -> new ThreatenedPieceDetection(
+                    piece,
+                    analysis.pieceValues().valueOf(piece.piece().type()),
+                    analysis.attackersOf(
+                        piece.square(),
+                        context.myColor().opposite()
+                    ).size(),
+                    analysis.defendersOf(piece).size()
+                ))
+                .toList();
+        };
     }
 }
