@@ -6,15 +6,6 @@ import java.util.Objects;
 
 /**
  * Ligne de classement d'un tournoi.
- *
- * @param bot bot concerné
- * @param played parties jouées
- * @param wins victoires
- * @param draws nulles naturelles
- * @param losses défaites
- * @param technicalDraws parties arrêtées par la limite technique
- * @param points score total, victoire=1, nulle=0.5
- * @param averageDecisionMillis temps moyen par décision
  */
 public record TournamentStanding(
     BotMetadata bot,
@@ -22,6 +13,7 @@ public record TournamentStanding(
     int wins,
     int draws,
     int losses,
+    int forfeits,
     int technicalDraws,
     double points,
     double averageDecisionMillis
@@ -34,9 +26,16 @@ public record TournamentStanding(
             || wins < 0
             || draws < 0
             || losses < 0
+            || forfeits < 0
             || technicalDraws < 0) {
             throw new IllegalArgumentException(
                 "standing counters must be non-negative"
+            );
+        }
+
+        if (forfeits > losses) {
+            throw new IllegalArgumentException(
+                "forfeits cannot exceed losses"
             );
         }
 
