@@ -18,6 +18,7 @@ public record MatchResult(
     BotMetadata black,
     MatchTermination termination,
     Optional<GameResult> gameResult,
+    Optional<MatchIncident> incident,
     List<PlayedMove> playedMoves,
     String initialFen,
     String finalFen
@@ -26,18 +27,57 @@ public record MatchResult(
     public MatchResult {
         Objects.requireNonNull(white, "white must not be null");
         Objects.requireNonNull(black, "black must not be null");
-        Objects.requireNonNull(termination, "termination must not be null");
-        Objects.requireNonNull(gameResult, "gameResult must not be null");
-        playedMoves = List.copyOf(
-            Objects.requireNonNull(playedMoves, "playedMoves must not be null")
+        Objects.requireNonNull(
+            termination,
+            "termination must not be null"
         );
-        Objects.requireNonNull(initialFen, "initialFen must not be null");
-        Objects.requireNonNull(finalFen, "finalFen must not be null");
+        Objects.requireNonNull(
+            gameResult,
+            "gameResult must not be null"
+        );
+        Objects.requireNonNull(
+            incident,
+            "incident must not be null"
+        );
 
-        if (termination == MatchTermination.NATURAL
+        playedMoves = List.copyOf(
+            Objects.requireNonNull(
+                playedMoves,
+                "playedMoves must not be null"
+            )
+        );
+
+        Objects.requireNonNull(
+            initialFen,
+            "initialFen must not be null"
+        );
+        Objects.requireNonNull(
+            finalFen,
+            "finalFen must not be null"
+        );
+
+        if ((termination == MatchTermination.NATURAL
+            || termination == MatchTermination.FORFEIT)
             && gameResult.isEmpty()) {
+
             throw new IllegalArgumentException(
-                "A naturally terminated match must have a game result"
+                "A natural or forfeited match must have a game result"
+            );
+        }
+
+        if (termination == MatchTermination.FORFEIT
+            && incident.isEmpty()) {
+
+            throw new IllegalArgumentException(
+                "A forfeited match must expose its incident"
+            );
+        }
+
+        if (termination != MatchTermination.FORFEIT
+            && incident.isPresent()) {
+
+            throw new IllegalArgumentException(
+                "Only a forfeited match may expose an incident"
             );
         }
     }
@@ -48,26 +88,14 @@ public record MatchResult(
             .toList();
     }
 
-    /**
-     * Nombre de demi-coups joués.
-     */
     public int pliesPlayed() {
         return playedMoves.size();
     }
 
-    /**
-     * Nombre de numéros de coups effectivement commencés.
-     *
-     * <p>Exemple : 1.e4 e5 2.Nf3 représente 3 demi-coups et 2 coups complets
-     * au sens d'affichage humain.</p>
-     */
     public int fullMovesPlayed() {
         return (playedMoves.size() + 1) / 2;
     }
 
-    /**
-     * Résultat standard utilisé dans un PGN.
-     */
     public String pgnResult() {
         if (gameResult.isEmpty()) {
             return "*";
@@ -81,9 +109,6 @@ public record MatchResult(
         };
     }
 
-    /**
-     * Temps total de décision d'un camp en millisecondes.
-     */
     public double totalDecisionMillis(Color color) {
         return playedMoves.stream()
             .filter(move -> move.color() == color)
@@ -91,9 +116,6 @@ public record MatchResult(
             .sum();
     }
 
-    /**
-     * Temps moyen par demi-coup pour un camp.
-     */
     public double averageDecisionMillis(Color color) {
         return playedMoves.stream()
             .filter(move -> move.color() == color)
@@ -102,9 +124,6 @@ public record MatchResult(
             .orElse(0.0);
     }
 
-    /**
-     * Plus long temps de décision d'un camp.
-     */
     public double maxDecisionMillis(Color color) {
         return playedMoves.stream()
             .filter(move -> move.color() == color)
@@ -119,5 +138,9 @@ public record MatchResult(
                 .map(GameResult::status)
                 .filter(status -> status != GameStatus.ONGOING)
                 .isPresent();
+    }
+
+    public boolean isForfeit() {
+        return termination == MatchTermination.FORFEIT;
     }
 }
