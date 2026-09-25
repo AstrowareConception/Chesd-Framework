@@ -112,6 +112,32 @@ final class DefaultAnalysis implements Analysis {
     }
 
     @Override
+    public boolean isKingAttacked() {
+        String fen = context.position().fen();
+
+        if (fen == null || fen.isBlank()) {
+            return false;
+        }
+
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        return engine.isKingAttacked(engine.fromFen(fen));
+    }
+
+    @Override
+    public List<PinPattern> pinsBy(Color color) {
+        return LineTacticAnalyzer.pinsBy(context.position(), color);
+    }
+
+    @Override
+    public List<SkewerPattern> skewersBy(Color color) {
+        return LineTacticAnalyzer.skewersBy(
+            context.position(),
+            color,
+            pieceValues
+        );
+    }
+
+    @Override
     public PositionProjection after(Move move) {
         Objects.requireNonNull(move, "move must not be null");
 
@@ -150,12 +176,6 @@ final class DefaultAnalysis implements Analysis {
         );
     }
 
-    /**
-     * Contexte minimal associé à une position projetée.
-     *
-     * <p>Le camp de ce contexte est le camp désormais au trait, ce qui garde
-     * cohérentes les méthodes dépendant des coups légaux, comme captures().</p>
-     */
     private record ProjectedContext(
         Color myColor,
         PositionView position,
