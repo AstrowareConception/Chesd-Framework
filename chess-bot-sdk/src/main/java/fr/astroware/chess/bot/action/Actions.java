@@ -698,6 +698,109 @@ public final class Actions {
             .toList();
     }
 
+
+    /**
+     * Évalue tous les coups légaux après la meilleure réponse adverse.
+     *
+     * <p>Cette variante est exacte à profondeur 2 : aucun coup candidat n'est
+     * écarté avant l'examen de la réponse adverse.</p>
+     */
+    public static <D extends Detection> Action<D>
+        bestPositionAfterBestReply() {
+
+        return bestPositionAfterBestReply(
+            Integer.MAX_VALUE
+        );
+    }
+
+    /**
+     * Variante optimisée : seuls les {@code candidateLimit} meilleurs coups
+     * selon l'évaluation immédiate sont poussés à profondeur 2.
+     *
+     * <p>Cette pré-sélection est explicite afin que l'étudiant comprenne le
+     * compromis entre qualité de recherche et coût de calcul.</p>
+     */
+    public static <D extends Detection> Action<D>
+        bestPositionAfterBestReply(int candidateLimit) {
+
+        if (candidateLimit <= 0) {
+            throw new IllegalArgumentException(
+                "candidateLimit must be > 0"
+            );
+        }
+
+        return (context, detections) -> {
+            record Immediate(
+                Move move,
+                fr.astroware.chess.bot.analysis.PositionEvaluation evaluation
+            ) {
+            }
+
+            List<Immediate> shortlist =
+                context.legalMoves().stream()
+                    .map(move -> {
+                        PositionProjection projection =
+                            context.analysis().after(move);
+
+                        return new Immediate(
+                            move,
+                            projection.analysis()
+                                .positionEvaluation(
+                                    context.myColor()
+                                )
+                        );
+                    })
+                    .sorted(
+                        java.util.Comparator.comparingDouble(
+                            (Immediate value) ->
+                                value.evaluation().total()
+                        ).reversed()
+                    )
+                    .limit(candidateLimit)
+                    .toList();
+
+            return shortlist.stream()
+                .map(immediate -> {
+                    var adversarial =
+                        context.analysis()
+                            .adversarialEvaluation(
+                                immediate.move(),
+                                context.myColor()
+                            );
+
+                    double safety =
+                        adversarial.afterReplyEvaluation()
+                            .map(
+                                fr.astroware.chess.bot.analysis.PositionEvaluation
+                                    ::kingSafety
+                            )
+                            .orElse(
+                                adversarial.robustScore()
+                            );
+
+                    double aggression = Math.clamp(
+                        (
+                            immediate.evaluation().mobility()
+                                + immediate.evaluation()
+                                    .centerControl()
+                        ) / 2.0,
+                        0.0,
+                        10.0
+                    );
+
+                    return EvaluatedMove.strategic(
+                        immediate.move(),
+                        adversarial.robustScore(),
+                        aggression,
+                        safety,
+                        10.0 - safety,
+                        adversarial.explanation()
+                    );
+                })
+                .toList();
+        };
+    }
+
     private static RiskAssessment assessCaptureRisk(
         fr.astroware.chess.bot.api.BotContext context,
         CaptureDetection detection
