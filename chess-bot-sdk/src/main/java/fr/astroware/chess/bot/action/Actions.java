@@ -12,6 +12,7 @@ import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
 import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
 import fr.astroware.chess.bot.situation.detection.PinDetection;
+import fr.astroware.chess.bot.situation.detection.RemoveDefenderDetection;
 import fr.astroware.chess.bot.situation.detection.SkewerDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
 import fr.astroware.chess.core.model.Move;
@@ -502,6 +503,77 @@ public final class Actions {
                         + detection.revealedAttacker().piece().type()
                         + " révèle une attaque sur "
                         + detection.target().piece().type()
+                );
+            })
+            .toList();
+    }
+
+
+    /**
+     * Évalue la capture d'un défenseur surchargé selon la valeur de la pièce
+     * capturée et surtout la valeur des cibles réellement exposées ensuite.
+     */
+    public static Action<RemoveDefenderDetection>
+        removeOverloadedDefender() {
+
+        return (context, detections) -> detections.stream()
+            .map(detection -> {
+                PositionProjection projection =
+                    context.analysis().after(detection.move());
+
+                Optional<Piece> movedPiece =
+                    projection.position().pieceAt(
+                        detection.move().to()
+                    );
+
+                boolean attacked = false;
+                boolean defended = false;
+
+                if (movedPiece.isPresent()) {
+                    PlacedPiece placed = new PlacedPiece(
+                        movedPiece.orElseThrow(),
+                        detection.move().to()
+                    );
+
+                    attacked =
+                        projection.analysis().isAttacked(placed);
+                    defended =
+                        projection.analysis().isDefended(placed);
+                }
+
+                double safety = !attacked
+                    ? 9.0
+                    : defended ? 6.0 : 2.5;
+                double risk = 10.0 - safety;
+
+                int defenderValue = context.analysis()
+                    .pieceValues()
+                    .valueOf(
+                        detection.overload()
+                            .defender()
+                            .piece()
+                            .type()
+                    );
+
+                double score = Math.clamp(
+                    6.3
+                        + defenderValue * 0.18
+                        + detection.exposedValue() * 0.32
+                        - (attacked && !defended ? 1.2 : 0.0),
+                    0.0,
+                    9.7
+                );
+
+                return EvaluatedMove.strategic(
+                    detection.move(),
+                    score,
+                    8.8,
+                    safety,
+                    risk,
+                    "Élimination d'un défenseur surchargé : "
+                        + detection.newlyHangingTargets().size()
+                        + " cible(s) exposée(s), valeur "
+                        + detection.exposedValue()
                 );
             })
             .toList();
