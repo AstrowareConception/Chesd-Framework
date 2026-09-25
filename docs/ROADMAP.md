@@ -79,7 +79,7 @@ La priorité suivante est la **couche d'analyse de position**, indispensable pou
 - [x] `ChessRulesEngine`
 - [x] adapter vers `chessgame` 2.3
 - [x] FEN
-- [ ] PGN
+- [x] PGN
 - [ ] perft
 - [ ] roque
 - [ ] en passant
@@ -159,6 +159,9 @@ Implémenter :
 - [x] règles conditionnées par phase
 - [x] profil stratégique dépendant du contexte
 - [x] recherche adversariale profondeur 2
+- [x] Minimax configurable
+- [x] alpha-bêta
+- [x] variante principale et statistiques de recherche
 - [x] pré-sélection configurable des candidats
 - [x] sécurité simple d'une pièce
 - [x] détection de pièce pendue
@@ -240,15 +243,17 @@ Puis :
 ## Phase 8 — Moteur de partie et tournoi
 
 - [x] match bot contre bot
-- [ ] alternance des couleurs
-- [ ] toutes rondes
-- [ ] scoring
+- [x] alternance des couleurs
+- [x] toutes rondes
+- [x] scoring
 - [x] seed
-- [ ] temps par coup
+- [x] mesure du temps par coup
 - [ ] capture des erreurs
 - [ ] PGN
-- [ ] classement
-- [ ] rapport console
+- [x] classement
+- [x] rapport console
+- [x] export PGN multi-parties
+- [x] export CSV classement
 
 ---
 
