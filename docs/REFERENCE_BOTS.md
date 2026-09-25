@@ -69,6 +69,8 @@ Bot d'exemple combinant plusieurs couches :
 | CautiousBot | important | forte | faible | oui | non |
 | BerserkerBot | important | secondaire | élevé | oui | non |
 | SolidPlannerBot | secondaire pour l'instant | forte | faible à moyen | oui | Londres / Scandinave |
+| GuardianBot | secondaire | très forte | faible | oui | non |
+| TacticalBot | important | moyenne | moyen | oui | non |
 
 ## Prochaine cible
 
@@ -81,3 +83,59 @@ Bot d'exemple combinant plusieurs couches :
 - menace de mat.
 
 Une activité pédagogique utile consiste à donner la même position à plusieurs bots puis comparer la règle déclenchée, les candidats, leurs scores et le coup final.
+
+---
+
+## GuardianBot
+
+```java
+GuardianBot
+```
+
+Guardian utilise la projection réelle de position.
+
+Sa première priorité est :
+
+```text
+pièce alliée pendue
+    ↓
+simuler toutes les fuites légales
+    ↓
+réanalyser chaque position
+    ↓
+choisir la destination la plus sûre
+```
+
+Il illustre la différence entre une heuristique locale et une décision fondée sur l'état **après** le coup.
+
+---
+
+## TacticalBot
+
+```java
+TacticalBot
+```
+
+TacticalBot utilise actuellement :
+
+1. mat en un ;
+2. sauvetage d'une pièce pendue ;
+3. capture d'une pièce pendue ;
+4. création d'une fourchette ;
+5. capture évaluée par projection ;
+6. centre ;
+7. développement ;
+8. roque ;
+9. fallback.
+
+Le détecteur de fourchette simule tous les coups légaux et cherche une pièce qui, après déplacement, attaque au moins deux pièces adverses.
+
+Le bot constitue désormais le meilleur exemple de composition entre :
+
+- moteur de règles ;
+- projection ;
+- Analysis ;
+- Situation ;
+- Detection ;
+- Action ;
+- StrategyProfile.
