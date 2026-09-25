@@ -21,6 +21,12 @@ public interface ChessRulesEngine {
 
     List<Move> legalMoves(PositionView position);
 
+    /**
+     * Retourne la notation algébrique courte (SAN) du coup dans la position
+     * courante : e4, Nf3, O-O, Qh4#, etc.
+     */
+    String toSan(PositionView position, Move move);
+
     PositionView play(PositionView position, Move move);
 
     GameResult result(PositionView position);
