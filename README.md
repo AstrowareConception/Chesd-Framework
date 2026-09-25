@@ -158,6 +158,7 @@ Déjà disponibles :
 - `ChameleonBot` ;
 - `PositionalBot` ;
 - `LookaheadBot` ;
+- `MinimaxBot` ;
 - `SolidPlannerBot` comme exemple pédagogique ;
 - `MatchRunner` pour faire jouer réellement deux bots avec une seed reproductible ;
 - tests unitaires et CI GitHub Actions.
@@ -224,3 +225,19 @@ mvn exec:java -Dexec.args="gui architect tactical"
 ```
 
 Voir `docs/INTERFACES.md` pour le détail.
+
+
+### Lancer un tournoi
+
+```bash
+cd chess-tournament
+mvn exec:java -Dexec.args="tournament positional lookahead minimax --games=2"
+```
+
+Avec exports :
+
+```bash
+mvn exec:java -Dexec.args="tournament tactical positional minimax --pgn=parties.pgn --csv=classement.csv"
+```
+
+Voir `docs/TOURNAMENT.md`.
