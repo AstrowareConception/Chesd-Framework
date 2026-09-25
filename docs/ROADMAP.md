@@ -152,6 +152,10 @@ Implémenter :
 - [ ] mobilité
 - [ ] contrôle du centre
 - [x] projection après un coup
+- [x] cache de projection par décision
+- [x] phase de jeu
+- [x] règles conditionnées par phase
+- [x] profil stratégique dépendant du contexte
 - [x] sécurité simple d'une pièce
 - [x] détection de pièce pendue
 
@@ -164,7 +168,7 @@ Implémenter :
 Lot V1 :
 
 1. toujours vraie — [x]
-2. en échec — [ ]
+2. en échec — [x]
 3. mat en un — [x]
 4. capture disponible — [ ]
 5. pièce adverse pendue — [ ]
@@ -174,16 +178,16 @@ Lot V1 :
 9. promotion disponible — [ ]
 10. roque disponible — [ ]
 11. fourchette — [x]
-12. clouage — [ ]
-13. enfilade — [ ]
+12. clouage — [x]
+13. enfilade — [x]
 14. développement possible — [ ]
 15. contrôle du centre — [ ]
 
 Puis :
 
-- attaque à la découverte
+- attaque à la découverte — [x]
 - double échec
-- surcharge
+- surcharge — [x]
 - déviation
 - attraction
 - élimination du défenseur
@@ -221,6 +225,8 @@ Puis :
 - [x] `BerserkerBot`
 - [x] `GuardianBot`
 - [x] `TacticalBot`
+- [x] `PressureBot`
+- [x] `ChameleonBot`
 - [x] `SolidPlannerBot` comme exemple pédagogique supplémentaire
 
 ---
