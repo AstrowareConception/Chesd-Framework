@@ -74,6 +74,7 @@ Bot d'exemple combinant plusieurs couches :
 | PressureBot | indirect / contraintes | moyenne | moyen à élevé | oui | non |
 | ChameleonBot | variable | variable | variable | oui | Londres / Scandinave |
 | PositionalBot | globale / heuristique | forte | faible à moyen | oui | non |
+| LookaheadBot | globale + réponse adverse | forte | faible à moyen | oui | non |
 
 ## Prochaine cible
 
@@ -210,3 +211,32 @@ Il utilise également :
 - création d'un pion passé en finale.
 
 Son intérêt pédagogique est de montrer une approche différente des bots à motifs nommés : **comparer des positions complètes plutôt que chercher uniquement une combinaison précise**.
+
+
+---
+
+## LookaheadBot
+
+```java
+LookaheadBot
+```
+
+LookaheadBot partage les heuristiques positionnelles de `PositionalBot`, mais pousse les meilleurs candidats un demi-coup adverse plus loin.
+
+```text
+PositionalBot
+mon coup -> note
+
+LookaheadBot
+mon coup -> meilleure réponse adverse -> note
+```
+
+Il utilise :
+
+```java
+Actions.bestPositionAfterBestReply(8);
+```
+
+Le nombre 8 représente une pré-sélection : seuls les huit meilleurs coups immédiats sont étudiés à profondeur 2.
+
+Ce bot sert de transition pédagogique vers Minimax.
