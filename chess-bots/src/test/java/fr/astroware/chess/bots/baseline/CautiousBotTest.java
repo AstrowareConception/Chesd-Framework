@@ -48,7 +48,11 @@ class CautiousBotTest {
         assertEquals(hangingRook, decision.move());
         assertEquals(
             "Prendre une pièce pendue",
-            decision.trace().getFirst().ruleName()
+            decision.trace().stream()
+                .filter(attempt -> attempt.selectedMove().isPresent())
+                .findFirst()
+                .orElseThrow()
+                .ruleName()
         );
     }
 
