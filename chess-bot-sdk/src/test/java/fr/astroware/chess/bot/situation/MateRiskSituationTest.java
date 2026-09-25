@@ -39,7 +39,7 @@ class MateRiskSituationTest {
         assertFalse(risks.isEmpty());
 
         List<EvaluatedMove> safeCandidates =
-            Actions.avoidMateInOne().candidates(
+            Actions.avoidMateInOne().evaluate(
                 context,
                 risks
             );
