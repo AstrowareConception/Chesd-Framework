@@ -114,6 +114,9 @@ fr.astroware.chess
 │   ├── action
 │   ├── analysis
 │   ├── evaluation
+│   ├── opening
+│   ├── plan
+│   ├── strategy
 │   └── trace
 ├── bots
 │   ├── baseline
@@ -243,7 +246,11 @@ L'étudiant décrit essentiellement son identité et ses règles. Le framework c
 ```java
 public abstract class ChessBot {
 
-    public abstract String name();
+    public abstract BotMetadata metadata();
+
+    protected StrategyProfile strategyProfile() {
+        return StrategyProfiles.balanced();
+    }
 
     protected abstract List<Rule<?>> rules();
 
@@ -266,7 +273,11 @@ Une instance de bot appartient à une seule partie. Cela autorise un état inter
 ```java
 public abstract class ChessBot {
 
-    public abstract String name();
+    public abstract BotMetadata metadata();
+
+    protected StrategyProfile strategyProfile() {
+        return StrategyProfiles.balanced();
+    }
 
     protected abstract List<Rule<?>> rules();
 
@@ -288,22 +299,48 @@ Un étudiant peut donc utiliser des champs privés typés pour mémoriser une ci
 
 ### 7.2 Plans multi-coups
 
-La V1 reste centrée sur les règles ordonnées. L'architecture réserve néanmoins une extension facultative :
+Les plans sont maintenant représentés par `StrategicPlan`.
 
 ```java
-public interface Plan {
+public interface StrategicPlan {
 
     String name();
 
-    boolean isApplicable(BotContext context);
+    String description();
 
-    Optional<Move> nextMove(BotContext context);
+    PlanProgress progress(BotContext context);
 
-    boolean isCompleted(BotContext context);
+    List<EvaluatedMove> candidates(BotContext context);
+
+    Rule<PresenceDetection> asRule();
 }
 ```
 
-Un plan n'est pas prioritaire pour la première livraison. Son rôle futur est de représenter une intention stratégique durable sans transformer `ChessBot` en machine à états codée en dur.
+Un plan est **adaptatif** : il ne mémorise pas nécessairement une séquence exacte. À chaque tour, il réévalue la position et propose les coups qui font progresser son objectif.
+
+Exemples déjà fournis :
+
+- `Plans.takeCenter()`
+- `Plans.developMinorPieces()`
+- `Plans.castleKingside()`
+
+### 7.3 Profils stratégiques
+
+`StrategyProfile` décrit la personnalité générale du bot selon trois axes normalisés de 0 à 10 :
+
+- agressivité ;
+- sécurité ;
+- tolérance au risque.
+
+La note de base d'un coup reste prépondérante, mais le profil peut départager des candidats proches.
+
+### 7.4 Ouvertures
+
+`OpeningBook` contient plusieurs `OpeningLine`.
+
+Une ligne reste applicable tant que l'historique réel constitue son préfixe et que le prochain coup théorique reste légal.
+
+Lorsque toutes les lignes deviennent incompatibles, la règle d'ouverture ne propose plus de candidat et la chaîne de règles continue naturellement vers le milieu de jeu.
 
 ---
 
