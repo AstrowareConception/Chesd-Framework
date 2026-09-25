@@ -6,6 +6,8 @@ import fr.astroware.chess.bot.rule.Action;
 import fr.astroware.chess.bot.rule.Detection;
 import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
+import fr.astroware.chess.bot.situation.detection.DiscoveredAttackDetection;
+import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
 import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
@@ -435,6 +437,71 @@ public final class Actions {
                         + detection.pattern().front().piece().type()
                         + " devant "
                         + detection.pattern().rear().piece().type()
+                );
+            })
+            .toList();
+    }
+
+
+    /**
+     * Un double échec est extrêmement forçant : seules des réponses du roi
+     * sont généralement possibles.
+     */
+    public static Action<DoubleCheckDetection> playDoubleCheck() {
+        return (context, detections) -> detections.stream()
+            .map(detection -> EvaluatedMove.strategic(
+                detection.move(),
+                9.7,
+                10.0,
+                6.5,
+                3.5,
+                "Double échec par "
+                    + detection.attackers().size()
+                    + " attaquants"
+            ))
+            .toList();
+    }
+
+    /**
+     * Évalue une attaque à la découverte selon la valeur de la nouvelle cible
+     * et la sécurité de la pièce qui s'écarte.
+     */
+    public static Action<DiscoveredAttackDetection>
+        playBestDiscoveredAttack() {
+
+        return (context, detections) -> detections.stream()
+            .map(detection -> {
+                double safety = !detection.movedPieceAttacked()
+                    ? 8.5
+                    : detection.movedPieceDefended() ? 6.0 : 2.5;
+
+                double risk = 10.0 - safety;
+                double targetBonus =
+                    detection.targetValue() >= 100
+                        ? 3.0
+                        : detection.targetValue() * 0.38;
+
+                double score = Math.clamp(
+                    5.8
+                        + targetBonus
+                        - (detection.movedPieceAttacked()
+                            && !detection.movedPieceDefended()
+                            ? 1.2
+                            : 0.0),
+                    0.0,
+                    9.7
+                );
+
+                return EvaluatedMove.strategic(
+                    detection.move(),
+                    score,
+                    9.0,
+                    safety,
+                    risk,
+                    "Attaque à la découverte : "
+                        + detection.revealedAttacker().piece().type()
+                        + " révèle une attaque sur "
+                        + detection.target().piece().type()
                 );
             })
             .toList();
