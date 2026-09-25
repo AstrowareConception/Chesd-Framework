@@ -2,6 +2,7 @@ package fr.astroware.chess.tournament.match;
 
 import fr.astroware.chess.bot.api.BotContext;
 import fr.astroware.chess.bot.api.BotDecision;
+import fr.astroware.chess.bot.api.BotMetadata;
 import fr.astroware.chess.bot.api.ChessBot;
 import fr.astroware.chess.core.game.GameResult;
 import fr.astroware.chess.core.model.Color;
@@ -19,9 +20,9 @@ import java.util.random.RandomGenerator;
 /**
  * Exécute une partie complète entre deux ChessBot.
  *
- * <p>La partie émet des événements via {@link MatchListener}. La console,
- * l'interface graphique ou d'autres observateurs peuvent donc suivre le même
- * moteur sans dupliquer la logique de jeu.</p>
+ * <p>Une exception non gérée provenant d'un bot provoque désormais un
+ * forfait propre : l'adversaire gagne, l'incident est enregistré et le
+ * tournoi peut continuer.</p>
  */
 public final class MatchRunner {
 
@@ -57,6 +58,9 @@ public final class MatchRunner {
         ChessBot white = whiteFactory.create();
         ChessBot black = blackFactory.create();
 
+        BotMetadata whiteMetadata = white.metadata();
+        BotMetadata blackMetadata = black.metadata();
+
         PositionView position = configuration.initialFen()
             .map(engine::fromFen)
             .orElseGet(engine::initialPosition);
@@ -64,8 +68,8 @@ public final class MatchRunner {
         String initialFen = position.fen();
 
         listener.onMatchStarted(
-            white.metadata(),
-            black.metadata(),
+            whiteMetadata,
+            blackMetadata,
             position
         );
 
@@ -82,8 +86,8 @@ public final class MatchRunner {
 
             if (before.isOver()) {
                 return finishNatural(
-                    white,
-                    black,
+                    whiteMetadata,
+                    blackMetadata,
                     before,
                     playedMoves,
                     initialFen,
@@ -94,10 +98,18 @@ public final class MatchRunner {
 
             Color color = position.sideToMove();
             ChessBot bot = color == Color.WHITE ? white : black;
-            RandomGenerator random =
-                color == Color.WHITE ? whiteRandom : blackRandom;
+            BotMetadata botMetadata =
+                color == Color.WHITE
+                    ? whiteMetadata
+                    : blackMetadata;
 
-            List<Move> legalMoves = engine.legalMoves(position);
+            RandomGenerator random =
+                color == Color.WHITE
+                    ? whiteRandom
+                    : blackRandom;
+
+            List<Move> legalMoves =
+                engine.legalMoves(position);
 
             BotContext context = new MatchContext(
                 color,
@@ -108,12 +120,31 @@ public final class MatchRunner {
             );
 
             long decisionStartedAt = System.nanoTime();
-            BotDecision decision = bot.decide(context);
+            BotDecision decision;
+
+            try {
+                decision = bot.decide(context);
+            } catch (RuntimeException exception) {
+                return finishForfeit(
+                    whiteMetadata,
+                    blackMetadata,
+                    color,
+                    botMetadata,
+                    exception,
+                    ply,
+                    playedMoves,
+                    initialFen,
+                    position,
+                    listener
+                );
+            }
+
             long decisionNanos =
                 System.nanoTime() - decisionStartedAt;
 
             String beforeFen = position.fen();
-            String san = engine.toSan(position, decision.move());
+            String san =
+                engine.toSan(position, decision.move());
 
             PositionView afterPosition =
                 engine.play(position, decision.move());
@@ -123,7 +154,7 @@ public final class MatchRunner {
             PlayedMove playedMove = new PlayedMove(
                 ply,
                 color,
-                bot.metadata(),
+                botMetadata,
                 decision,
                 decisionNanos,
                 san,
@@ -140,8 +171,8 @@ public final class MatchRunner {
 
             if (after.isOver()) {
                 return finishNatural(
-                    white,
-                    black,
+                    whiteMetadata,
+                    blackMetadata,
                     after,
                     playedMoves,
                     initialFen,
@@ -152,9 +183,10 @@ public final class MatchRunner {
         }
 
         MatchResult result = new MatchResult(
-            white.metadata(),
-            black.metadata(),
+            whiteMetadata,
+            blackMetadata,
             MatchTermination.MOVE_LIMIT,
+            Optional.empty(),
             Optional.empty(),
             playedMoves,
             initialFen,
@@ -166,8 +198,8 @@ public final class MatchRunner {
     }
 
     private static MatchResult finishNatural(
-        ChessBot white,
-        ChessBot black,
+        BotMetadata white,
+        BotMetadata black,
         GameResult gameResult,
         List<PlayedMove> moves,
         String initialFen,
@@ -175,10 +207,11 @@ public final class MatchRunner {
         MatchListener listener
     ) {
         MatchResult result = new MatchResult(
-            white.metadata(),
-            black.metadata(),
+            white,
+            black,
             MatchTermination.NATURAL,
             Optional.of(gameResult),
+            Optional.empty(),
             moves,
             initialFen,
             position.fen()
@@ -186,6 +219,66 @@ public final class MatchRunner {
 
         listener.onMatchEnded(result);
         return result;
+    }
+
+    private static MatchResult finishForfeit(
+        BotMetadata white,
+        BotMetadata black,
+        Color offenderColor,
+        BotMetadata offender,
+        RuntimeException exception,
+        int ply,
+        List<PlayedMove> moves,
+        String initialFen,
+        PositionView position,
+        MatchListener listener
+    ) {
+        GameResult gameResult =
+            offenderColor == Color.WHITE
+                ? GameResult.blackWins()
+                : GameResult.whiteWins();
+
+        MatchIncident incident = new MatchIncident(
+            MatchIncidentType.BOT_EXCEPTION,
+            offenderColor,
+            offender,
+            exception.getClass().getName(),
+            safeMessage(exception),
+            ply
+        );
+
+        MatchResult result = new MatchResult(
+            white,
+            black,
+            MatchTermination.FORFEIT,
+            Optional.of(gameResult),
+            Optional.of(incident),
+            moves,
+            initialFen,
+            position.fen()
+        );
+
+        listener.onMatchEnded(result);
+        return result;
+    }
+
+    private static String safeMessage(
+        RuntimeException exception
+    ) {
+        String message = exception.getMessage();
+
+        if (message == null || message.isBlank()) {
+            return "";
+        }
+
+        String normalized =
+            message.replaceAll("\\s+", " ").trim();
+
+        int maxLength = 500;
+
+        return normalized.length() <= maxLength
+            ? normalized
+            : normalized.substring(0, maxLength) + "…";
     }
 
     private record MatchContext(
