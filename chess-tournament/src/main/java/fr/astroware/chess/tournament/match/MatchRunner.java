@@ -19,9 +19,9 @@ import java.util.random.RandomGenerator;
 /**
  * Exécute une partie complète entre deux ChessBot.
  *
- * <p>Cette première version est volontairement synchrone. L'isolation dans des
- * JVM séparées et les timeouts durs appartiendront à la phase de robustesse du
- * tournoi.</p>
+ * <p>La partie émet des événements via {@link MatchListener}. La console,
+ * l'interface graphique ou d'autres observateurs peuvent donc suivre le même
+ * moteur sans dupliquer la logique de jeu.</p>
  */
 public final class MatchRunner {
 
@@ -40,12 +40,34 @@ public final class MatchRunner {
         BotFactory blackFactory,
         MatchConfiguration configuration
     ) {
+        return play(
+            whiteFactory,
+            blackFactory,
+            configuration,
+            MatchListeners.none()
+        );
+    }
+
+    public MatchResult play(
+        BotFactory whiteFactory,
+        BotFactory blackFactory,
+        MatchConfiguration configuration,
+        MatchListener listener
+    ) {
         ChessBot white = whiteFactory.create();
         ChessBot black = blackFactory.create();
 
         PositionView position = configuration.initialFen()
             .map(engine::fromFen)
             .orElseGet(engine::initialPosition);
+
+        String initialFen = position.fen();
+
+        listener.onMatchStarted(
+            white.metadata(),
+            black.metadata(),
+            position
+        );
 
         List<Move> history = new ArrayList<>();
         List<PlayedMove> playedMoves = new ArrayList<>();
@@ -59,12 +81,14 @@ public final class MatchRunner {
             GameResult before = engine.result(position);
 
             if (before.isOver()) {
-                return naturalResult(
+                return finishNatural(
                     white,
                     black,
                     before,
                     playedMoves,
-                    position
+                    initialFen,
+                    position,
+                    listener
                 );
             }
 
@@ -84,56 +108,80 @@ public final class MatchRunner {
             );
 
             BotDecision decision = bot.decide(context);
-            position = engine.play(position, decision.move());
+
+            String beforeFen = position.fen();
+            String san = engine.toSan(position, decision.move());
+
+            PositionView afterPosition =
+                engine.play(position, decision.move());
+
             history.add(decision.move());
 
-            playedMoves.add(
-                new PlayedMove(
-                    ply,
-                    color,
-                    bot.metadata(),
-                    decision
-                )
+            PlayedMove playedMove = new PlayedMove(
+                ply,
+                color,
+                bot.metadata(),
+                decision,
+                san,
+                beforeFen,
+                afterPosition.fen()
             );
+
+            playedMoves.add(playedMove);
+            listener.onMovePlayed(playedMove);
+
+            position = afterPosition;
 
             GameResult after = engine.result(position);
 
             if (after.isOver()) {
-                return naturalResult(
+                return finishNatural(
                     white,
                     black,
                     after,
                     playedMoves,
-                    position
+                    initialFen,
+                    position,
+                    listener
                 );
             }
         }
 
-        return new MatchResult(
+        MatchResult result = new MatchResult(
             white.metadata(),
             black.metadata(),
             MatchTermination.MOVE_LIMIT,
             Optional.empty(),
             playedMoves,
+            initialFen,
             position.fen()
         );
+
+        listener.onMatchEnded(result);
+        return result;
     }
 
-    private static MatchResult naturalResult(
+    private static MatchResult finishNatural(
         ChessBot white,
         ChessBot black,
         GameResult gameResult,
         List<PlayedMove> moves,
-        PositionView position
+        String initialFen,
+        PositionView position,
+        MatchListener listener
     ) {
-        return new MatchResult(
+        MatchResult result = new MatchResult(
             white.metadata(),
             black.metadata(),
             MatchTermination.NATURAL,
             Optional.of(gameResult),
             moves,
+            initialFen,
             position.fen()
         );
+
+        listener.onMatchEnded(result);
+        return result;
     }
 
     private record MatchContext(
