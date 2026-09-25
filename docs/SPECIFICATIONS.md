@@ -175,6 +175,36 @@ Le contexte remis au bot doit être en lecture seule.
 
 ---
 
+### 4.4 Mémoire de partie et plans facultatifs
+
+Le modèle `Situation -> Action` est volontairement réactif et doit rester suffisant pour un premier bot.
+
+Cependant, un bot plus évolué doit pouvoir conserver une intention entre plusieurs coups. Exemples :
+
+- préparer le roque sur plusieurs tours ;
+- poursuivre une pièce cible ;
+- conserver un objectif d'attaque sur une aile ;
+- se souvenir qu'un plan vient d'échouer ;
+- adapter son comportement à la phase de jeu.
+
+Une instance de `ChessBot` est donc **limitée à une partie** et peut conserver un état interne typé.
+
+Le framework doit fournir des hooks de cycle de vie sans obliger les étudiants à les utiliser :
+
+```java
+protected void onGameStart(GameContext context) {}
+
+protected void onMovePlayed(GameEvent event) {}
+
+protected void onGameEnd(GameResult result) {}
+```
+
+Une abstraction `Plan` pourra être ajoutée après la V1 pour les stratégies multi-coups. Elle ne doit pas remplacer les règles ordonnées : elle constitue une couche facultative destinée aux bots avancés.
+
+Ce choix permet de conserver une API extrêmement simple pour un débutant tout en évitant de condamner le framework à des bots purement opportunistes et sans continuité stratégique.
+
+---
+
 ## 5. Modèle de domaine minimal
 
 Le domaine public doit au minimum exposer les concepts suivants :
