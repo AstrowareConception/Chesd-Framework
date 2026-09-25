@@ -12,6 +12,12 @@ Les modifications du framework et les soumissions de bots sont donc traitées s�
 
 Le workflow cible est une Pull Request.
 
+Le tutoriel complet est disponible dans :
+
+```text
+docs/STUDENT_TOURNAMENT_BOT.md
+```
+
 ### 1. Créer une branche
 
 Exemple :
@@ -41,14 +47,19 @@ chess-bots/
 
 Le bot doit :
 
+- être placé dans `fr.astroware.chess.bots.students` ;
 - étendre `ChessBot` ;
-- avoir un nom unique ;
+- être `public`, non abstrait et posséder un constructeur public sans argument ;
+- avoir un nom unique, un auteur et une description ;
 - retourner uniquement des coups via l'API prévue ;
-- ne pas modifier le moteur ;
-- ne pas accéder au réseau ;
+- ne pas modifier le moteur, le SDK, le tournoi ou les `pom.xml` ;
+- ne pas accéder au réseau ou au disque ;
+- ne pas lancer de processus, utiliser la réflexion ou terminer la JVM ;
 - ne pas inspecter le code ou l'état privé d'un adversaire ;
 - respecter le budget de calcul ;
 - conserver un code lisible.
+
+Une Pull Request étudiante doit contenir **exactement un bot** et au moins un test sous le package `students`.
 
 ### 4. Tester
 
@@ -56,11 +67,30 @@ Avant une Pull Request :
 
 ```bash
 mvn verify
+mvn install
+cd chess-tournament
+mvn exec:java -Dexec.args="validate-students"
 ```
 
 Les situations ou actions personnalisées significatives doivent être accompagnées de tests.
 
-### 5. Ouvrir une Pull Request
+Le validateur exécute également le bot en JVM isolée comme Blanc puis comme Noir.
+
+### 5. Validation automatique de la Pull Request
+
+Dès qu'un bot étudiant est détecté, la CI vérifie automatiquement :
+
+- que seuls les répertoires `students` de production et de test sont modifiés ;
+- qu'un test est présent ;
+- qu'une seule classe étend `ChessBot` ;
+- que le package est correct ;
+- qu'aucune API réseau, fichier, processus ou réflexion interdite n'est utilisée ;
+- que `mvn verify` passe ;
+- que le bot peut réellement être instancié et jouer dans une JVM isolée.
+
+Après merge, le catalogue découvre automatiquement le bot. Il n'est pas nécessaire de modifier `BotCatalog`.
+
+### 6. Ouvrir une Pull Request
 
 La description doit préciser :
 
