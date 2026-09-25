@@ -71,6 +71,8 @@ Bot d'exemple combinant plusieurs couches :
 | SolidPlannerBot | secondaire pour l'instant | forte | faible à moyen | oui | Londres / Scandinave |
 | GuardianBot | secondaire | très forte | faible | oui | non |
 | TacticalBot | important | moyenne | moyen | oui | non |
+| PressureBot | indirect / contraintes | moyenne | moyen à élevé | oui | non |
+| ChameleonBot | variable | variable | variable | oui | Londres / Scandinave |
 
 ## Prochaine cible
 
@@ -139,3 +141,45 @@ Le bot constitue désormais le meilleur exemple de composition entre :
 - Detection ;
 - Action ;
 - StrategyProfile.
+
+
+---
+
+## PressureBot
+
+```java
+PressureBot
+```
+
+PressureBot cherche à augmenter les contraintes avant de récolter le matériel.
+
+Ses priorités caractéristiques sont :
+
+1. éliminer un défenseur surchargé ;
+2. créer un clouage ;
+3. créer une enfilade ;
+4. créer une attaque à la découverte ;
+5. créer une fourchette ;
+6. donner échec.
+
+Il montre qu'un bot offensif n'est pas obligé de privilégier immédiatement les captures : il peut chercher à détériorer la coordination adverse.
+
+---
+
+## ChameleonBot
+
+```java
+ChameleonBot
+```
+
+Chameleon adapte son profil stratégique à la phase de jeu :
+
+```text
+OPENING     -> solide
+MIDDLEGAME  -> offensif
+ENDGAME     -> défensif
+```
+
+Il utilise également `Situations.onlyInPhase(...)` pour réserver certaines tactiques au milieu de jeu.
+
+Ce bot sert d'exemple de stratégie **contextuelle** : la même classe ne conserve pas nécessairement la même personnalité pendant toute la partie.
