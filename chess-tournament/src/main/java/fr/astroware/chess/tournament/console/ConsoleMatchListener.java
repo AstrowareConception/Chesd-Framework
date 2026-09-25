@@ -72,10 +72,11 @@ public final class ConsoleMatchListener implements MatchListener {
 
             selected.selectedMove().ifPresent(candidate ->
                 out.printf(
-                    " score=%.2f/10 risque=%.1f sécurité=%.1f",
+                    " score=%.2f/10 risque=%.1f sécurité=%.1f temps=%.1fms",
                     candidate.score().value(),
                     candidate.risk().value(),
-                    candidate.safety().value()
+                    candidate.safety().value(),
+                    move.decisionMillis()
                 )
             );
         }
@@ -113,6 +114,16 @@ public final class ConsoleMatchListener implements MatchListener {
         out.printf("Demi-coups : %d%n", result.pliesPlayed());
         out.printf("Coups       : %d%n", result.fullMovesPlayed());
         out.printf("Terminaison : %s%n", result.termination());
+        out.printf(
+            "Temps moyen Blancs : %.1f ms (max %.1f ms)%n",
+            result.averageDecisionMillis(Color.WHITE),
+            result.maxDecisionMillis(Color.WHITE)
+        );
+        out.printf(
+            "Temps moyen Noirs  : %.1f ms (max %.1f ms)%n",
+            result.averageDecisionMillis(Color.BLACK),
+            result.maxDecisionMillis(Color.BLACK)
+        );
         out.printf("FEN finale  : %s%n", result.finalFen());
         out.println("============================================================");
     }
