@@ -6,6 +6,7 @@ import fr.astroware.chess.bots.baseline.ChameleonBot;
 import fr.astroware.chess.bots.baseline.GreedyBot;
 import fr.astroware.chess.bots.baseline.GuardianBot;
 import fr.astroware.chess.bots.baseline.LookaheadBot;
+import fr.astroware.chess.bots.baseline.MinimaxBot;
 import fr.astroware.chess.bots.baseline.RandomBot;
 import fr.astroware.chess.bots.baseline.PressureBot;
 import fr.astroware.chess.bots.baseline.PositionalBot;
@@ -52,6 +53,7 @@ public final class BotCatalog {
         bots.put("berserker", BerserkerBot::new);
         bots.put("guardian", GuardianBot::new);
         bots.put("lookahead", LookaheadBot::new);
+        bots.put("minimax", MinimaxBot::new);
         bots.put("pressure", PressureBot::new);
         bots.put("positional", PositionalBot::new);
         bots.put("tactical", TacticalBot::new);
