@@ -113,6 +113,44 @@ class TacticalBotTest {
         assertTrue(engine.isKingAttacked(after));
     }
 
+
+    @Test
+    void prefersDoubleCheckWhenAvailable() {
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        PositionView position = engine.fromFen(
+            "4k3/8/8/8/8/8/4B3/4R2K w - - 0 1"
+        );
+
+        BotDecision decision =
+            new TacticalBot().decide(context(engine, Color.WHITE, position));
+
+        assertEquals("Créer un double échec", selectedRule(decision));
+        assertEquals(Move.fromUci("e2b5"), decision.move());
+    }
+
+    @Test
+    void usesDiscoveredAttackOnValuableTarget() {
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        PositionView position = engine.fromFen(
+            "4q2k/8/8/8/8/8/4B3/4R2K w - - 0 1"
+        );
+
+        BotDecision decision =
+            new TacticalBot().decide(context(engine, Color.WHITE, position));
+
+        assertEquals(
+            "Attaque à la découverte",
+            selectedRule(decision)
+        );
+
+        PositionView after = engine.play(position, decision.move());
+
+        assertTrue(
+            after.pieceAt(fr.astroware.chess.core.model.Square.from("e8"))
+                .isPresent()
+        );
+    }
+
     private static String selectedRule(BotDecision decision) {
         return decision.trace().stream()
             .filter(attempt -> attempt.selectedMove().isPresent())
