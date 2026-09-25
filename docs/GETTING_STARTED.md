@@ -628,3 +628,112 @@ Pour approfondir ce mécanisme, lisez :
 ```text
 docs/EVALUATION.md
 ```
+
+
+---
+
+## 21. Donner une personnalité à votre bot
+
+Le framework fournit maintenant des profils stratégiques.
+
+```java
+@Override
+protected StrategyProfile strategyProfile() {
+    return StrategyProfiles.defensive();
+}
+```
+
+Profils disponibles :
+
+```java
+StrategyProfiles.balanced();
+StrategyProfiles.defensive();
+StrategyProfiles.solid();
+StrategyProfiles.aggressive();
+StrategyProfiles.adventurous();
+```
+
+Le profil intervient lorsqu'une règle dispose de plusieurs coups candidats.
+
+Chaque candidat peut indiquer :
+
+- son score général ;
+- son agressivité ;
+- sa sécurité ;
+- son niveau de risque.
+
+Le même ensemble de coups peut donc être interprété différemment par deux bots.
+
+---
+
+## 22. Suivre une stratégie sur plusieurs coups
+
+Un `StrategicPlan` représente un objectif.
+
+Exemple :
+
+```java
+Plans.castleKingside().asRule()
+```
+
+Le plan ne dit pas :
+
+> « joue exactement Nf3, puis Be2, puis O-O ».
+
+Il réévalue la partie à chaque tour.
+
+Il peut donc choisir une autre route si nécessaire.
+
+Plans actuellement fournis :
+
+```java
+Plans.takeCenter();
+Plans.developMinorPieces();
+Plans.castleKingside();
+```
+
+Consultez `docs/STRATEGIES.md` pour comprendre leur fonctionnement.
+
+---
+
+## 23. Utiliser une ouverture
+
+Une ouverture peut elle aussi être insérée comme une règle :
+
+```java
+Openings.londonSystem().asRule()
+```
+
+ou :
+
+```java
+Openings.scandinavianDefense().asRule()
+```
+
+Le livre suit l'historique complet des coups.
+
+S'il ne connaît plus la position, il ne propose simplement aucun coup et le bot passe à la règle suivante.
+
+Consultez `docs/OPENINGS.md`.
+
+---
+
+## 24. Exemple complet à lire
+
+Le projet contient désormais :
+
+```text
+chess-bots/src/main/java/
+fr/astroware/chess/bots/examples/SolidPlannerBot.java
+```
+
+Ce bot montre dans une seule classe :
+
+- des métadonnées ;
+- un profil stratégique ;
+- une ouverture avec les Blancs ;
+- une ouverture avec les Noirs ;
+- plusieurs plans ;
+- un fallback.
+
+Il constitue le meilleur exemple actuel avant l'arrivée des situations tactiques avancées.
