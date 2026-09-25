@@ -9,6 +9,8 @@ import fr.astroware.chess.tournament.match.MatchRunner;
 import fr.astroware.chess.tournament.pgn.PgnExporter;
 import fr.astroware.chess.tournament.roundrobin.RoundRobinConfiguration;
 import fr.astroware.chess.tournament.roundrobin.RoundRobinResult;
+import fr.astroware.chess.tournament.roundrobin.RoundRobinPgnExporter;
+import fr.astroware.chess.tournament.roundrobin.StandingsCsvExporter;
 import fr.astroware.chess.tournament.roundrobin.RoundRobinTournament;
 import fr.astroware.chess.tournament.roundrobin.TournamentParticipant;
 import fr.astroware.chess.tournament.ui.SwingMatchViewer;
@@ -189,6 +191,65 @@ public final class ChessFrameworkCli {
             );
 
         new ConsoleTournamentReporter().print(result);
+
+        writeTournamentExports(args, result);
+    }
+
+    private static void writeTournamentExports(
+        String[] args,
+        RoundRobinResult result
+    ) {
+        for (String arg : args) {
+            if (arg.startsWith("--pgn=")) {
+                Path path = Path.of(
+                    arg.substring("--pgn=".length())
+                );
+
+                try {
+                    Files.writeString(
+                        path,
+                        new RoundRobinPgnExporter().export(result),
+                        StandardCharsets.UTF_8
+                    );
+                } catch (IOException exception) {
+                    throw new IllegalStateException(
+                        "Impossible d'écrire le PGN du tournoi : "
+                            + path,
+                        exception
+                    );
+                }
+
+                System.out.println(
+                    "PGN tournoi : "
+                        + path.toAbsolutePath()
+                );
+            }
+
+            if (arg.startsWith("--csv=")) {
+                Path path = Path.of(
+                    arg.substring("--csv=".length())
+                );
+
+                try {
+                    Files.writeString(
+                        path,
+                        new StandingsCsvExporter().export(result),
+                        StandardCharsets.UTF_8
+                    );
+                } catch (IOException exception) {
+                    throw new IllegalStateException(
+                        "Impossible d'écrire le CSV du classement : "
+                            + path,
+                        exception
+                    );
+                }
+
+                System.out.println(
+                    "CSV classement : "
+                        + path.toAbsolutePath()
+                );
+            }
+        }
     }
 
     private static BotFactory requireBot(String name) {
@@ -283,8 +344,8 @@ public final class ChessFrameworkCli {
               console <blancs> <noirs> [--seed=N] [--max-plies=N]
               pgn     <blancs> <noirs> [fichier.pgn] [--seed=N] [--max-plies=N]
               gui     <blancs> <noirs> [--seed=N] [--max-plies=N]
-              tournament <bot1> <bot2> [...] [--games=N] [--seed=N] [--max-plies=N]
-              tournament --all [--games=N] [--seed=N] [--max-plies=N]
+              tournament <bot1> <bot2> [...] [--games=N] [--seed=N] [--max-plies=N] [--pgn=file] [--csv=file]
+              tournament --all [--games=N] [--seed=N] [--max-plies=N] [--pgn=file] [--csv=file]
 
             Exemples :
               console tactical random
@@ -294,6 +355,7 @@ public final class ChessFrameworkCli {
               tournament random greedy tactical
               tournament positional lookahead minimax --games=2
               tournament --all --games=2
+              tournament tactical positional --pgn=parties.pgn --csv=classement.csv
 
             Utilisez :
               list
