@@ -65,12 +65,11 @@ public final class RoundRobinTournament {
             new LinkedHashMap<>();
 
         for (TournamentParticipant participant : roster) {
-            BotMetadata metadata =
-                participant.factory().create().metadata();
-
             standings.put(
                 participant.key(),
-                new StandingAccumulator(metadata)
+                new StandingAccumulator(
+                    participant.metadata()
+                )
             );
         }
 
@@ -106,8 +105,8 @@ public final class RoundRobinTournament {
                     );
 
                     MatchResult match = matchRunner.play(
-                        white.factory(),
-                        black.factory(),
+                        white.playerFactory(),
+                        black.playerFactory(),
                         new MatchConfiguration(
                             configuration.maxPlies(),
                             seed,
