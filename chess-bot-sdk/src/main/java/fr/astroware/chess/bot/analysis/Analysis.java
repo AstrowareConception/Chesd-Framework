@@ -100,6 +100,16 @@ public interface Analysis {
     List<SkewerPattern> skewersBy(Color color);
 
     /**
+     * Batteries exercées par le camp indiqué.
+     */
+    List<BatteryPattern> batteriesBy(Color color);
+
+    /**
+     * Pressions de rayon X exercées par le camp indiqué.
+     */
+    List<XRayPattern> xRaysBy(Color color);
+
+    /**
      * Défenseurs du camp indiqué qui sont l'unique défenseur d'au moins deux
      * pièces actuellement attaquées par le camp adverse.
      */
