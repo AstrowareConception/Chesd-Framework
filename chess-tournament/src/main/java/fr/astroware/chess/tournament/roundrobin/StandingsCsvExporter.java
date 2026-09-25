@@ -64,10 +64,10 @@ public final class StandingsCsvExporter {
 
     private static String csv(String value) {
         String escaped = value.replace(
-            """,
-            """"
+            "\"",
+            "\"\""
         );
 
-        return """ + escaped + """;
+        return "\"" + escaped + "\"";
     }
 }
