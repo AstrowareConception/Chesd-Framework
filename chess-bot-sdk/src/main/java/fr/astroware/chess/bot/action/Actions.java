@@ -29,6 +29,7 @@ import fr.astroware.chess.core.model.PlacedPiece;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Point d'entrée vers les actions réutilisables fournies par le framework.
