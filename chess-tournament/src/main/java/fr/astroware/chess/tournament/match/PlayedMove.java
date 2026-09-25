@@ -13,6 +13,7 @@ import java.util.Objects;
  * @param color camp ayant joué
  * @param bot identité du bot
  * @param decision décision complète, trace incluse
+ * @param decisionNanos temps passé dans ChessBot.decide()
  * @param san notation algébrique courte du coup
  * @param beforeFen position avant le coup
  * @param afterFen position après le coup
@@ -22,6 +23,7 @@ public record PlayedMove(
     Color color,
     BotMetadata bot,
     BotDecision decision,
+    long decisionNanos,
     String san,
     String beforeFen,
     String afterFen
@@ -30,6 +32,12 @@ public record PlayedMove(
     public PlayedMove {
         if (ply <= 0) {
             throw new IllegalArgumentException("ply must be > 0");
+        }
+
+        if (decisionNanos < 0L) {
+            throw new IllegalArgumentException(
+                "decisionNanos must be non-negative"
+            );
         }
 
         Objects.requireNonNull(color, "color must not be null");
@@ -42,5 +50,9 @@ public record PlayedMove(
 
     public int fullMoveNumber() {
         return (ply + 1) / 2;
+    }
+
+    public double decisionMillis() {
+        return decisionNanos / 1_000_000.0;
     }
 }
