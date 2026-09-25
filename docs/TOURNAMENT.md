@@ -341,3 +341,79 @@ average_decision_ms
 ```
 
 Cela permet d'archiver un tournoi complet ou d'analyser facilement les résultats dans un tableur.
+
+
+---
+
+## 14. Forfait sur erreur d'un bot
+
+Un tournoi étudiant ne doit jamais être interrompu parce qu'un bot contient un bug.
+
+`MatchRunner` intercepte donc les `RuntimeException` qui s'échappent de :
+
+```java
+ChessBot.decide(...)
+```
+
+Le comportement est alors :
+
+```text
+exception du bot
+    ↓
+arrêt propre de la partie
+    ↓
+forfait du bot fautif
+    ↓
+victoire de l'adversaire
+    ↓
+MatchIncident enregistré
+    ↓
+tournoi poursuivi
+```
+
+Un incident contient :
+
+```java
+incident.type();
+incident.offenderColor();
+incident.offender();
+incident.exceptionClass();
+incident.message();
+incident.ply();
+```
+
+Le type actuellement disponible est :
+
+```java
+BOT_EXCEPTION
+```
+
+Le classement distingue les défaites par forfait des autres défaites.
+
+Le PGN contient également des tags supplémentaires :
+
+```text
+[Termination "forfeit"]
+[ForfeitBy "Nom du bot"]
+[ForfeitReason "BOT_EXCEPTION"]
+```
+
+Le CSV du classement possède une colonne `forfeits`.
+
+---
+
+## 15. Limite actuelle : boucle infinie
+
+Intercepter une exception ne protège pas contre :
+
+```java
+while (true) {
+    // ...
+}
+```
+
+Un timeout réellement dur nécessite d'exécuter le code étudiant dans un processus ou une JVM séparée afin de pouvoir tuer proprement l'exécution fautive.
+
+Cette isolation appartient à la phase de robustesse suivante.
+
+Un simple timeout sur un thread Java ne serait pas une protection suffisante : un thread bloqué peut continuer à consommer des ressources même après l'annulation de son `Future`.
