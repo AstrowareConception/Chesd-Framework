@@ -266,8 +266,10 @@ Puis :
 - [x] template de Pull Request
 - [x] CI
 - [x] règles de contribution
-- [ ] tutoriel complet « créer son bot de tournoi »
-- [ ] validation automatique de la structure d'une soumission
+- [x] tutoriel complet « créer son bot de tournoi »
+- [x] validation automatique de la structure d'une soumission
+- [x] validation exécutable en JVM isolée
+- [x] découverte automatique des bots étudiants dans le catalogue
 - [ ] gel du framework avant tournoi
 
 ---
@@ -280,7 +282,7 @@ Puis :
 - [x] plafond mémoire de la JVM enfant (`-Xmx`)
 - [x] canal loopback authentifié par jeton de session
 - [x] stdout/stderr étudiant séparé du protocole
-- [ ] contrôle des dépendances
+- [x] contrôle des dépendances de soumission (périmètre PR gelé)
 - [ ] limitation réseau/disque
 - [ ] reproductibilité complète
 - [x] rapport d'incident
