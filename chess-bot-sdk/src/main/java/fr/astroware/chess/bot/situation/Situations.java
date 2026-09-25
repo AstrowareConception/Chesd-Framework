@@ -1,11 +1,13 @@
 package fr.astroware.chess.bot.situation;
 
 import fr.astroware.chess.bot.analysis.Analysis;
+import fr.astroware.chess.bot.analysis.BatteryPattern;
 import fr.astroware.chess.bot.analysis.GamePhase;
 import fr.astroware.chess.bot.analysis.OverloadedDefenderPattern;
 import fr.astroware.chess.bot.analysis.PinPattern;
 import fr.astroware.chess.bot.analysis.PositionProjection;
 import fr.astroware.chess.bot.analysis.SkewerPattern;
+import fr.astroware.chess.bot.analysis.XRayPattern;
 import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.rule.Situation;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
@@ -13,6 +15,7 @@ import fr.astroware.chess.bot.situation.detection.CastlingDetection;
 import fr.astroware.chess.bot.situation.detection.CenterImprovementDetection;
 import fr.astroware.chess.bot.situation.detection.DiscoveredAttackDetection;
 import fr.astroware.chess.bot.situation.detection.DevelopmentDetection;
+import fr.astroware.chess.bot.situation.detection.DeflectionDetection;
 import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
@@ -23,6 +26,7 @@ import fr.astroware.chess.bot.situation.detection.PromotionDetection;
 import fr.astroware.chess.bot.situation.detection.RemoveDefenderDetection;
 import fr.astroware.chess.bot.situation.detection.SkewerDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
+import fr.astroware.chess.bot.situation.detection.XRayDetection;
 import fr.astroware.chess.core.game.GameStatus;
 import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
@@ -848,6 +852,437 @@ public final class Situations {
         };
     }
 
+
+
+    /**
+     * Détecte les coups créant une nouvelle batterie de pièces coulissantes.
+     */
+    public static Situation<BatteryDetection>
+        batteryOpportunity() {
+
+        return context -> {
+            Set<BatteryPattern> before =
+                new HashSet<>(
+                    context.analysis()
+                        .batteriesBy(
+                            context.myColor()
+                        )
+                );
+
+            List<BatteryDetection> detections =
+                new ArrayList<>();
+
+            for (Move move : context.legalMoves()) {
+                PositionProjection projection =
+                    context.analysis().after(move);
+
+                for (BatteryPattern pattern
+                    : projection.analysis()
+                        .batteriesBy(
+                            context.myColor()
+                        )) {
+
+                    if (before.contains(pattern)) {
+                        continue;
+                    }
+
+                    detections.add(
+                        new BatteryDetection(
+                            move,
+                            pattern,
+                            tacticalValue(
+                                pattern.target()
+                                    .piece()
+                                    .type(),
+                                projection.analysis()
+                            ),
+                            projection.analysis()
+                                .isAttacked(
+                                    pattern.front()
+                                ),
+                            projection.analysis()
+                                .isDefended(
+                                    pattern.front()
+                                )
+                        )
+                    );
+                }
+            }
+
+            return List.copyOf(detections);
+        };
+    }
+
+    /**
+     * Détecte les coups créant une nouvelle pression de rayon X.
+     */
+    public static Situation<XRayDetection>
+        xRayOpportunity() {
+
+        return context -> {
+            Set<XRayPattern> before =
+                new HashSet<>(
+                    context.analysis()
+                        .xRaysBy(
+                            context.myColor()
+                        )
+                );
+
+            List<XRayDetection> detections =
+                new ArrayList<>();
+
+            for (Move move : context.legalMoves()) {
+                PositionProjection projection =
+                    context.analysis().after(move);
+
+                for (XRayPattern pattern
+                    : projection.analysis()
+                        .xRaysBy(
+                            context.myColor()
+                        )) {
+
+                    if (before.contains(pattern)) {
+                        continue;
+                    }
+
+                    detections.add(
+                        new XRayDetection(
+                            move,
+                            pattern,
+                            tacticalValue(
+                                pattern.blocker()
+                                    .piece()
+                                    .type(),
+                                projection.analysis()
+                            ),
+                            tacticalValue(
+                                pattern.target()
+                                    .piece()
+                                    .type(),
+                                projection.analysis()
+                            ),
+                            projection.analysis()
+                                .isAttacked(
+                                    pattern.attacker()
+                                ),
+                            projection.analysis()
+                                .isDefended(
+                                    pattern.attacker()
+                                )
+                        )
+                    );
+                }
+            }
+
+            return List.copyOf(detections);
+        };
+    }
+
+    /**
+     * Détecte une opportunité de déviation : le coup ajoute une nouvelle
+     * pression sur le défenseur unique d'une cible plus précieuse.
+     *
+     * <p>Le motif est volontairement heuristique : il signale une pression
+     * exploitable sans prétendre que la séquence suivante est forcée.</p>
+     */
+    public static Situation<DeflectionDetection>
+        deflectionOpportunity() {
+
+        return context -> {
+            Color opponent =
+                context.myColor().opposite();
+
+            List<DeflectionDetection> detections =
+                new ArrayList<>();
+
+            for (PlacedPiece target
+                : context.position()
+                    .pieces(opponent)) {
+
+                if (target.piece().type()
+                    == PieceType.KING) {
+                    continue;
+                }
+
+                List<PlacedPiece> defenders =
+                    context.analysis()
+                        .defendersOf(target);
+
+                if (defenders.size() != 1) {
+                    continue;
+                }
+
+                PlacedPiece defender =
+                    defenders.getFirst();
+
+                int defenderValue =
+                    tacticalValue(
+                        defender.piece().type(),
+                        context.analysis()
+                    );
+
+                int targetValue =
+                    tacticalValue(
+                        target.piece().type(),
+                        context.analysis()
+                    );
+
+                if (targetValue
+                    <= defenderValue) {
+                    continue;
+                }
+
+                int beforeAttackers =
+                    context.analysis()
+                        .attackersOf(
+                            defender.square(),
+                            context.myColor()
+                        )
+                        .size();
+
+                for (Move move
+                    : context.legalMoves()) {
+
+                    if (move.to().equals(
+                        defender.square()
+                    )) {
+                        // La capture du défenseur est déjà couverte par
+                        // removeOverloadedDefenderOpportunity.
+                        continue;
+                    }
+
+                    PositionProjection projection =
+                        context.analysis()
+                            .after(move);
+
+                    Optional<Piece> defenderAfter =
+                        projection.position()
+                            .pieceAt(
+                                defender.square()
+                            );
+
+                    Optional<Piece> targetAfter =
+                        projection.position()
+                            .pieceAt(
+                                target.square()
+                            );
+
+                    if (defenderAfter.isEmpty()
+                        || targetAfter.isEmpty()
+                        || defenderAfter
+                            .orElseThrow()
+                            .color()
+                            != opponent
+                        || targetAfter
+                            .orElseThrow()
+                            .color()
+                            != opponent) {
+                        continue;
+                    }
+
+                    PlacedPiece projectedDefender =
+                        new PlacedPiece(
+                            defenderAfter.orElseThrow(),
+                            defender.square()
+                        );
+
+                    PlacedPiece projectedTarget =
+                        new PlacedPiece(
+                            targetAfter.orElseThrow(),
+                            target.square()
+                        );
+
+                    List<PlacedPiece>
+                        projectedDefenders =
+                            projection.analysis()
+                                .defendersOf(
+                                    projectedTarget
+                                );
+
+                    if (projectedDefenders.size()
+                            != 1
+                        || !projectedDefenders
+                            .getFirst()
+                            .equals(
+                                projectedDefender
+                            )) {
+                        continue;
+                    }
+
+                    int afterAttackers =
+                        projection.analysis()
+                            .attackersOf(
+                                defender.square(),
+                                context.myColor()
+                            )
+                            .size();
+
+                    int added =
+                        afterAttackers
+                            - beforeAttackers;
+
+                    if (added <= 0) {
+                        continue;
+                    }
+
+                    detections.add(
+                        new DeflectionDetection(
+                            move,
+                            projectedDefender,
+                            projectedTarget,
+                            defenderValue,
+                            targetValue,
+                            added
+                        )
+                    );
+                }
+            }
+
+            return List.copyOf(detections);
+        };
+    }
+
+    /**
+     * Détecte une attraction du roi par sacrifice : le coup donne échec, le
+     * roi peut capturer la pièce offerte, puis le camp attaquant obtient au
+     * coup suivant un mat en un ou une capture plus importante que le
+     * sacrifice.
+     */
+    public static Situation<AttractionDetection>
+        attractionOpportunity() {
+
+        return context -> {
+            Color opponent =
+                context.myColor()
+                    .opposite();
+
+            List<AttractionDetection> detections =
+                new ArrayList<>();
+
+            for (Move move
+                : context.legalMoves()) {
+
+                PositionProjection projection =
+                    context.analysis()
+                        .after(move);
+
+                if (!projection.analysis()
+                    .isKingAttacked()) {
+                    continue;
+                }
+
+                Optional<Piece> offered =
+                    projection.position()
+                        .pieceAt(move.to());
+
+                if (offered.isEmpty()
+                    || offered.orElseThrow()
+                        .color()
+                        != context.myColor()
+                    || offered.orElseThrow()
+                        .type()
+                        == PieceType.KING) {
+                    continue;
+                }
+
+                Optional<PlacedPiece> king =
+                    projection.position()
+                        .pieces(opponent)
+                        .stream()
+                        .filter(piece ->
+                            piece.piece().type()
+                                == PieceType.KING
+                        )
+                        .findFirst();
+
+                if (king.isEmpty()) {
+                    continue;
+                }
+
+                Optional<Move> kingCapture =
+                    projection.legalMoves()
+                        .stream()
+                        .filter(reply ->
+                            reply.from().equals(
+                                king.orElseThrow()
+                                    .square()
+                            )
+                        )
+                        .filter(reply ->
+                            reply.to().equals(
+                                move.to()
+                            )
+                        )
+                        .findFirst();
+
+                if (kingCapture.isEmpty()) {
+                    continue;
+                }
+
+                PositionProjection afterCapture =
+                    projection.analysis()
+                        .after(
+                            kingCapture.orElseThrow()
+                        );
+
+                boolean mateFollowUp =
+                    !afterCapture.analysis()
+                        .mateInOneMoves()
+                        .isEmpty();
+
+                int bestCaptureValue =
+                    afterCapture.analysis()
+                        .captures()
+                        .stream()
+                        .map(capture ->
+                            afterCapture.position()
+                                .pieceAt(
+                                    capture.to()
+                                )
+                        )
+                        .flatMap(Optional::stream)
+                        .map(Piece::type)
+                        .mapToInt(type ->
+                            tacticalValue(
+                                type,
+                                afterCapture.analysis()
+                            )
+                        )
+                        .max()
+                        .orElse(0);
+
+                int sacrificedValue =
+                    tacticalValue(
+                        offered.orElseThrow()
+                            .type(),
+                        projection.analysis()
+                    );
+
+                if (!mateFollowUp
+                    && bestCaptureValue
+                        <= sacrificedValue) {
+                    continue;
+                }
+
+                detections.add(
+                    new AttractionDetection(
+                        move,
+                        new PlacedPiece(
+                            offered.orElseThrow(),
+                            move.to()
+                        ),
+                        king.orElseThrow(),
+                        kingCapture.orElseThrow(),
+                        sacrificedValue,
+                        mateFollowUp,
+                        bestCaptureValue
+                    )
+                );
+            }
+
+            return List.copyOf(detections);
+        };
+    }
 
     /**
      * Détecte les captures qui éliminent un défenseur surchargé et rendent
