@@ -1,8 +1,10 @@
 package fr.astroware.chess.bots.baseline;
 
 import fr.astroware.chess.bot.action.Actions;
+import fr.astroware.chess.bot.analysis.GamePhase;
 import fr.astroware.chess.bot.api.BotMetadata;
 import fr.astroware.chess.bot.api.ChessBot;
+import fr.astroware.chess.bot.plan.Plans;
 import fr.astroware.chess.bot.rule.Rule;
 import fr.astroware.chess.bot.situation.Situations;
 import fr.astroware.chess.bot.strategy.StrategyProfile;
@@ -60,6 +62,15 @@ public final class PositionalBot extends ChessBot {
                 "Prendre une pièce pendue",
                 Situations.hangingEnemyPiece(),
                 Actions.captureHighestValue()
+            ),
+            Plans.improveKingSafety().asRule(
+                Situations.inPhase(GamePhase.OPENING)
+            ),
+            Plans.useOpenFile().asRule(
+                Situations.inPhase(GamePhase.MIDDLEGAME)
+            ),
+            Plans.createPassedPawn().asRule(
+                Situations.inPhase(GamePhase.ENDGAME)
             ),
             rule(
                 "Évaluer la position",
