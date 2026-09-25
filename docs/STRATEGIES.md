@@ -495,3 +495,44 @@ Actions.bestPosition();
 Cette action simule tous les coups légaux puis transforme la note de `PositionEvaluation` en `EvaluatedMove`.
 
 C'est le principe utilisé par `PositionalBot`.
+
+
+---
+
+## 16. Regarder une réponse adverse
+
+Deux actions positionnelles sont maintenant disponibles.
+
+### Profondeur 1
+
+```java
+Actions.bestPosition();
+```
+
+Chaque coup est évalué immédiatement.
+
+### Profondeur 2
+
+```java
+Actions.bestPositionAfterBestReply();
+```
+
+Chaque coup est évalué après la meilleure réponse adverse.
+
+Une variante permet de contrôler le coût :
+
+```java
+Actions.bestPositionAfterBestReply(8);
+```
+
+Ici, les 8 meilleurs coups selon l'évaluation immédiate sont conservés avant la recherche des réponses adverses.
+
+Ce compromis est volontairement explicite :
+
+```text
+plus de candidats
+= meilleure couverture
+= plus de calcul
+```
+
+Le bot de référence `LookaheadBot` utilise une shortlist de 8 coups.
