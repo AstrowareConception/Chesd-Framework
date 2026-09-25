@@ -122,6 +122,43 @@ class SpecialMoveSituationTest {
         );
     }
 
+    @Test
+    void genericDetectedMoveActionKeepsLegalDetectedMoves() {
+        ChessRulesEngine engine =
+            ChessRulesEngines.standard();
+
+        PositionView position = engine.fromFen(
+            "4k3/P7/8/8/8/8/8/4K3 w - - 0 1"
+        );
+
+        BotContext context =
+            context(engine, position);
+
+        List<PromotionDetection> detections =
+            Situations.promotionAvailable()
+                .detect(context);
+
+        List<EvaluatedMove> candidates =
+            Actions.playDetectedMove(
+                PromotionDetection::move
+            ).evaluate(
+                context,
+                detections
+            );
+
+        assertEquals(4, candidates.size());
+
+        assertTrue(
+            candidates.stream()
+                .allMatch(candidate ->
+                    context.legalMoves()
+                        .contains(
+                            candidate.move()
+                        )
+                )
+        );
+    }
+
     private static BotContext context(
         ChessRulesEngine engine,
         PositionView position
