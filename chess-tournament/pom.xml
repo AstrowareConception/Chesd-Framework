@@ -30,4 +30,19 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.6.4</version>
+                <configuration>
+                    <mainClass>
+                        fr.astroware.chess.tournament.cli.ChessFrameworkCli
+                    </mainClass>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
