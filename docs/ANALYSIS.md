@@ -95,17 +95,45 @@ Actions.captureWithRiskAwareness();
 
 Elle tient également compte du nombre de défenseurs et du rapport de valeur entre attaquant et cible.
 
-## Limite actuelle : pas encore de projection complète
+## Projection après un coup
 
-Le framework ne sait pas encore calculer parfaitement :
+La projection est maintenant disponible :
 
 ```java
-analysis.after(move)
+PositionProjection projection =
+    analysis.after(move);
 ```
 
-Cette projection sera bâtie au-dessus du moteur de règles choisi afin de gérer correctement captures, roque, promotion, prise en passant et droits de roque.
+Le coup est réellement exécuté sur une copie de la position par le moteur de règles.
 
-Nous évitons volontairement de coder une seconde implémentation partielle des règles des échecs uniquement pour la simulation.
+On peut ensuite demander :
+
+```java
+projection.position();
+projection.analysis();
+projection.legalMoves();
+projection.result();
+```
+
+Exemple :
+
+```java
+PlacedPiece movedPiece = ...;
+
+boolean stillAttacked =
+    projection.analysis().isAttacked(movedPiece);
+```
+
+La vraie partie n'est jamais modifiée.
+
+Cette capacité est déjà utilisée pour :
+
+- chercher une case sûre pour une pièce menacée ;
+- réévaluer le risque d'une capture ;
+- détecter un mat en un ;
+- détecter des fourchettes.
+
+Elle permettra ensuite d'implémenter les clouages, enfilades, attaques à la découverte et évaluations à faible profondeur.
 
 ## Chaîne complète
 
