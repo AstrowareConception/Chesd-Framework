@@ -116,6 +116,7 @@ Il obtient alors un bot au comportement différent sans réécrire le moteur.
 ## Documentation
 
 - [Bien démarrer](docs/GETTING_STARTED.md)
+- [Créer et soumettre son bot de tournoi](docs/STUDENT_TOURNAMENT_BOT.md)
 - [Spécifications fonctionnelles et pédagogiques](docs/SPECIFICATIONS.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Évaluation des positions et des coups](docs/EVALUATION.md)
@@ -162,7 +163,9 @@ Déjà disponibles :
 - `MinimaxBot` ;
 - `SolidPlannerBot` comme exemple pédagogique ;
 - `MatchRunner` pour faire jouer réellement deux bots avec une seed reproductible ;
-- tests unitaires et CI GitHub Actions.
+- tests unitaires et CI GitHub Actions ;
+- validation automatique des Pull Requests étudiantes ;
+- découverte automatique des bots du package `students` dans le catalogue.
 
 La couche d'analyse dispose désormais de la **projection après un coup**. Mat en un et fourchette sont déjà détectés par simulation réelle. Le catalogue couvre désormais mat en un, sortie d'échec, fourchette, clouage, enfilade, double échec, attaque à la découverte et surcharge d'un défenseur. Le framework sait aussi adapter une stratégie à l'ouverture, au milieu de jeu et à la finale.
 
