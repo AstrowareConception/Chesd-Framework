@@ -1,0 +1,388 @@
+# Construire une vraie stratégie de bot
+
+Le Chess Framework ne cherche pas seulement à faire jouer des coups légaux. Son objectif pédagogique est de permettre à chaque étudiant de construire une **personnalité échiquéenne cohérente**.
+
+Trois mécanismes complémentaires sont disponibles :
+
+1. l'ordre des règles ;
+2. le profil stratégique ;
+3. les plans multi-coups.
+
+Ils ne remplissent pas le même rôle.
+
+---
+
+## 1. L'ordre des règles : ce qui est prioritaire
+
+Le principe historique du framework reste :
+
+```text
+Situation -> Action
+```
+
+et les règles sont parcourues dans l'ordre.
+
+Cela signifie que l'ordre constitue déjà une véritable stratégie.
+
+Exemple prudent :
+
+```text
+1. éviter le mat
+2. sortir d'échec
+3. mettre le roi à l'abri
+4. sauver une pièce attaquée
+5. développer
+6. prendre le centre
+7. chercher une tactique
+```
+
+Exemple offensif :
+
+```text
+1. mater
+2. sortir d'échec
+3. exploiter une tactique
+4. prendre le centre
+5. développer activement
+6. roquer
+```
+
+Les mêmes outils peuvent donc produire des bots très différents.
+
+---
+
+## 2. StrategyProfile : la personnalité générale
+
+Le profil stratégique agit lorsque **plusieurs coups sont valables pour une même règle**.
+
+Trois axes sont proposés dans la première version :
+
+- agressivité ;
+- sécurité ;
+- tolérance au risque.
+
+Chaque valeur va de 0 à 10.
+
+Exemple :
+
+```java
+@Override
+protected StrategyProfile strategyProfile() {
+    return StrategyProfiles.defensive();
+}
+```
+
+Profils fournis :
+
+```java
+StrategyProfiles.balanced();
+StrategyProfiles.defensive();
+StrategyProfiles.solid();
+StrategyProfiles.aggressive();
+StrategyProfiles.adventurous();
+```
+
+---
+
+## 3. Un profil ne remplace pas la note d'un coup
+
+Chaque `EvaluatedMove` possède d'abord un score de qualité général.
+
+Exemple :
+
+```text
+Coup A : 7,5/10
+Coup B : 7,2/10
+```
+
+Il possède aussi trois caractéristiques :
+
+```text
+agressivité
+sécurité
+risque
+```
+
+Le profil calcule ensuite une **préférence effective**.
+
+Un bot défensif peut donc préférer :
+
+```text
+Coup A
+score de base : 7,2
+sécurité : 9
+risque : 2
+```
+
+à :
+
+```text
+Coup B
+score de base : 7,5
+agressivité : 9
+sécurité : 3
+risque : 9
+```
+
+Le score général reste important : le style n'est pas censé transformer un très mauvais coup en excellent coup.
+
+Il sert à départager des options raisonnablement proches.
+
+---
+
+## 4. Définir son propre profil
+
+Un étudiant peut fabriquer sa propre personnalité :
+
+```java
+@Override
+protected StrategyProfile strategyProfile() {
+    return StrategyProfiles.profile(
+        "Forteresse",
+        2.0,  // agressivité
+        10.0, // sécurité
+        1.0   // tolérance au risque
+    );
+}
+```
+
+ou :
+
+```java
+@Override
+protected StrategyProfile strategyProfile() {
+    return StrategyProfiles.profile(
+        "Pirate",
+        10.0,
+        2.0,
+        10.0
+    );
+}
+```
+
+Deux bots utilisant exactement les mêmes règles peuvent ainsi faire des choix différents.
+
+---
+
+# 5. StrategicPlan : poursuivre un objectif
+
+Une règle tactique répond souvent à un événement immédiat :
+
+> « une pièce est pendue, je peux la prendre ».
+
+Un plan stratégique répond à une autre question :
+
+> « qu'est-ce que j'essaie d'obtenir dans les prochains coups ? »
+
+Exemples :
+
+- prendre le centre ;
+- développer les pièces mineures ;
+- mettre le roi à l'abri ;
+- plus tard : créer un pion passé ;
+- plus tard : attaquer le roi adverse ;
+- plus tard : simplifier lorsque l'on a un avantage matériel.
+
+---
+
+## 6. Un plan n'est pas une suite figée
+
+C'est un point essentiel.
+
+Le plan :
+
+```text
+Mettre le roi à l'abri
+```
+
+ne signifie pas :
+
+```text
+1. Nf3
+2. Be2
+3. O-O
+```
+
+quoi qu'il arrive.
+
+À chaque tour, le plan regarde de nouveau la position et les coups légaux.
+
+Il peut proposer :
+
+```text
+Nf3
+Be2
+Bd3
+g3
+e3
+e4
+```
+
+avec différentes notes.
+
+Le profil du bot choisit ensuite une route.
+
+Si le petit roque devient directement légal :
+
+```text
+O-O -> 9,5/10
+```
+
+le plan le privilégie immédiatement.
+
+Cette approche est plus robuste qu'une séquence codée en dur.
+
+---
+
+## 7. Plans fournis actuellement
+
+### Prendre le centre
+
+```java
+Plans.takeCenter()
+```
+
+La première version cherche à occuper les quatre cases centrales :
+
+```text
+d4 e4 d5 e5
+```
+
+Cette approximation sera enrichie lorsque l'AttackMap permettra de mesurer également le **contrôle** du centre.
+
+### Développer les pièces mineures
+
+```java
+Plans.developMinorPieces()
+```
+
+Le plan cherche à faire quitter leurs cases initiales aux cavaliers et aux fous.
+
+### Mettre le roi à l'abri
+
+```java
+Plans.castleKingside()
+```
+
+Le plan cherche le petit roque.
+
+S'il n'est pas encore possible, il propose plusieurs coups susceptibles de le préparer.
+
+---
+
+## 8. Insérer un plan dans le comportement
+
+Tout plan peut devenir une règle :
+
+```java
+Plans.takeCenter().asRule()
+```
+
+Exemple :
+
+```java
+@Override
+protected List<Rule<?>> rules() {
+    return List.of(
+        Openings.londonSystem().asRule(),
+        Plans.takeCenter().asRule(),
+        Plans.developMinorPieces().asRule(),
+        Plans.castleKingside().asRule(),
+        rule(
+            "Secours",
+            Situations.always(),
+            Actions.randomLegalMove()
+        )
+    );
+}
+```
+
+L'ordre est intentionnel.
+
+Ici le bot tente :
+
+1. son ouverture ;
+2. de prendre le centre ;
+3. de développer ;
+4. de roquer ;
+5. puis seulement un coup de secours.
+
+---
+
+## 9. Changer l'ordre change la personnalité
+
+Bot plutôt prudent :
+
+```java
+return List.of(
+    opening.asRule(),
+    Plans.castleKingside().asRule(),
+    Plans.developMinorPieces().asRule(),
+    Plans.takeCenter().asRule()
+);
+```
+
+Bot plus dynamique :
+
+```java
+return List.of(
+    opening.asRule(),
+    Plans.takeCenter().asRule(),
+    Plans.developMinorPieces().asRule(),
+    Plans.castleKingside().asRule()
+);
+```
+
+C'est une propriété importante du framework :
+
+> la stratégie doit rester lisible dans le code de la classe du bot.
+
+---
+
+## 10. Mesurer l'avancement
+
+Un plan expose également :
+
+```java
+PlanProgress progress(BotContext context);
+```
+
+La progression est notée de 0 à 10.
+
+Exemple :
+
+```text
+Plan : mettre le roi à l'abri
+Progression : 4/10
+État : ACTIVE
+Explication :
+"Le roque n'est pas encore disponible : développement nécessaire."
+```
+
+États possibles :
+
+- `ACTIVE`
+- `COMPLETED`
+- `BLOCKED`
+
+Cette information sera utile plus tard pour les traces détaillées et les interfaces de visualisation.
+
+---
+
+## 11. Limite volontaire de la première version
+
+Les plans actuels utilisent encore une analyse simple.
+
+Par exemple, « prendre le centre » mesure essentiellement l'occupation des cases centrales.
+
+Lorsque la couche `Analysis` sera développée, le même plan pourra intégrer :
+
+- contrôle des cases ;
+- nombre d'attaquants ;
+- nombre de défenseurs ;
+- sécurité de la pièce installée au centre ;
+- conséquences après le coup.
+
+L'API du bot n'aura pas besoin de changer.
+
+C'est précisément l'intérêt de séparer le **plan** de l'implémentation de l'analyse.
