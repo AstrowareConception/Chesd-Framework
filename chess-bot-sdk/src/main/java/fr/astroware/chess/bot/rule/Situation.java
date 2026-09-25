@@ -40,4 +40,18 @@ public interface Situation<D extends Detection> {
             .filter(predicate)
             .toList();
     }
+
+    /**
+     * Active cette situation uniquement lorsque le contexte satisfait une
+     * condition supplémentaire, sans perdre le type précis de la détection.
+     *
+     * <p>Exemple : n'envisager une tactique que pendant le milieu de jeu.</p>
+     */
+    default Situation<D> when(Predicate<BotContext> condition) {
+        Objects.requireNonNull(condition, "condition must not be null");
+
+        return context -> condition.test(context)
+            ? detect(context)
+            : List.of();
+    }
 }
