@@ -116,6 +116,63 @@ final class DefaultAnalysis implements Analysis {
     }
 
     @Override
+    public PawnStructure pawnStructure(Color color) {
+        return PawnStructureAnalyzer.analyze(
+            context.position(),
+            attackMap,
+            color
+        );
+    }
+
+    @Override
+    public FileStatus fileStatus(
+        fr.astroware.chess.core.model.BoardFile file
+    ) {
+        return PositionEvaluator.fileStatus(
+            context.position(),
+            file
+        );
+    }
+
+    @Override
+    public double mobilityScore(Color color) {
+        return PositionEvaluator.mobilityScore(
+            attackMap,
+            color
+        );
+    }
+
+    @Override
+    public double centerControlScore(Color color) {
+        return PositionEvaluator.centerControlScore(
+            context.position(),
+            attackMap,
+            color
+        );
+    }
+
+    @Override
+    public double kingSafetyScore(Color color) {
+        return PositionEvaluator.kingSafetyScore(
+            context.position(),
+            attackMap,
+            color,
+            gamePhase()
+        );
+    }
+
+    @Override
+    public PositionEvaluation positionEvaluation(Color color) {
+        return PositionEvaluator.evaluate(
+            context.position(),
+            attackMap,
+            pieceValues,
+            gamePhase(),
+            color
+        );
+    }
+
+    @Override
     public GamePhase gamePhase() {
         int nonPawnMaterial = context.position().pieces().stream()
             .map(PlacedPiece::piece)
