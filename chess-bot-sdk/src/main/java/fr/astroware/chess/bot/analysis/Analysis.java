@@ -36,6 +36,11 @@ public interface Analysis {
     PieceValues pieceValues();
 
     /**
+     * Estimation heuristique de la grande phase de la partie.
+     */
+    GamePhase gamePhase();
+
+    /**
      * Indique si le roi du camp au trait est actuellement en échec.
      */
     boolean isKingAttacked();
