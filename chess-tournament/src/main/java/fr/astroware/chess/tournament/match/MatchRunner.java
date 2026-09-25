@@ -107,7 +107,10 @@ public final class MatchRunner {
                 random
             );
 
+            long decisionStartedAt = System.nanoTime();
             BotDecision decision = bot.decide(context);
+            long decisionNanos =
+                System.nanoTime() - decisionStartedAt;
 
             String beforeFen = position.fen();
             String san = engine.toSan(position, decision.move());
@@ -122,6 +125,7 @@ public final class MatchRunner {
                 color,
                 bot.metadata(),
                 decision,
+                decisionNanos,
                 san,
                 beforeFen,
                 afterPosition.fen()
