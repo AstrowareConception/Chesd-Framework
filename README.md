@@ -66,6 +66,7 @@ L'API exacte sera raffinée pendant l'implémentation ; cet exemple illustre l'e
 
 - [Spécifications fonctionnelles et pédagogiques](docs/SPECIFICATIONS.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
+- [Évaluation des positions et des coups](docs/EVALUATION.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Contribution des bots](CONTRIBUTING.md)
 
