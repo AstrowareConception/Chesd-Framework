@@ -19,4 +19,16 @@ public final class Plans {
     public static StrategicPlan castleKingside() {
         return new CastleKingsidePlan();
     }
+
+    public static StrategicPlan createPassedPawn() {
+        return new CreatePassedPawnPlan();
+    }
+
+    public static StrategicPlan useOpenFile() {
+        return new UseOpenFilePlan();
+    }
+
+    public static StrategicPlan improveKingSafety() {
+        return new ImproveKingSafetyPlan();
+    }
 }
