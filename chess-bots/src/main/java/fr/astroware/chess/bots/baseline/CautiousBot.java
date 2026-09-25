@@ -38,6 +38,21 @@ public final class CautiousBot extends ChessBot {
     protected List<Rule<?>> rules() {
         return List.of(
             rule(
+                "Mater immédiatement",
+                Situations.mateInOne(),
+                Actions.playMateInOne()
+            ),
+            rule(
+                "Sortir d'échec",
+                Situations.inCheck(),
+                Actions.bestCheckEscape()
+            ),
+            rule(
+                "Éviter un mat en un",
+                Situations.mateInOneRisk(),
+                Actions.avoidMateInOne()
+            ),
+            rule(
                 "Prendre une pièce pendue",
                 Situations.hangingEnemyPiece(),
                 Actions.captureHighestValue()
