@@ -10,6 +10,22 @@ permissions:
   contents: read
 
 jobs:
+  submission-structure:
+    name: Student submission structure
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate student Pull Request scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: bash scripts/validate-student-submission.sh "$BASE_SHA"
+
   build:
     name: Build and test
     runs-on: ubuntu-latest
