@@ -73,6 +73,7 @@ Bot d'exemple combinant plusieurs couches :
 | TacticalBot | important | moyenne | moyen | oui | non |
 | PressureBot | indirect / contraintes | moyenne | moyen à élevé | oui | non |
 | ChameleonBot | variable | variable | variable | oui | Londres / Scandinave |
+| PositionalBot | globale / heuristique | forte | faible à moyen | oui | non |
 
 ## Prochaine cible
 
@@ -183,3 +184,29 @@ ENDGAME     -> défensif
 Il utilise également `Situations.onlyInPhase(...)` pour réserver certaines tactiques au milieu de jeu.
 
 Ce bot sert d'exemple de stratégie **contextuelle** : la même classe ne conserve pas nécessairement la même personnalité pendant toute la partie.
+
+
+---
+
+## PositionalBot
+
+```java
+PositionalBot
+```
+
+Après les urgences tactiques, PositionalBot évalue tous les coups légaux selon :
+
+- matériel ;
+- mobilité ;
+- contrôle du centre ;
+- structure de pions ;
+- sécurité du roi ;
+- phase de jeu.
+
+Il utilise également :
+
+- amélioration de la sécurité du roi à l'ouverture ;
+- colonne ouverte au milieu de jeu ;
+- création d'un pion passé en finale.
+
+Son intérêt pédagogique est de montrer une approche différente des bots à motifs nommés : **comparer des positions complètes plutôt que chercher uniquement une combinaison précise**.
