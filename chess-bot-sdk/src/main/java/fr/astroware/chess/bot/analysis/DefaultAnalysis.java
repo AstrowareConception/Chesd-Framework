@@ -142,6 +142,49 @@ final class DefaultAnalysis implements Analysis {
     }
 
     @Override
+    public List<OverloadedDefenderPattern> overloadedDefenders(Color color) {
+        Map<PlacedPiece, List<PlacedPiece>> protectedByDefender =
+            new HashMap<>();
+
+        for (PlacedPiece target : context.position().pieces(color)) {
+            if (target.piece().type()
+                == fr.astroware.chess.core.model.PieceType.KING) {
+                continue;
+            }
+
+            if (!attackMap.isAttacked(
+                target.square(),
+                color.opposite()
+            )) {
+                continue;
+            }
+
+            List<PlacedPiece> defenders = defendersOf(target);
+
+            if (defenders.size() != 1) {
+                continue;
+            }
+
+            PlacedPiece defender = defenders.getFirst();
+
+            protectedByDefender
+                .computeIfAbsent(
+                    defender,
+                    ignored -> new ArrayList<>()
+                )
+                .add(target);
+        }
+
+        return protectedByDefender.entrySet().stream()
+            .filter(entry -> entry.getValue().size() >= 2)
+            .map(entry -> new OverloadedDefenderPattern(
+                entry.getKey(),
+                entry.getValue()
+            ))
+            .toList();
+    }
+
+    @Override
     public PositionProjection after(Move move) {
         Objects.requireNonNull(move, "move must not be null");
         return projectionCache.computeIfAbsent(
