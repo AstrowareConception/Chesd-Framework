@@ -5,6 +5,7 @@ import fr.astroware.chess.bot.api.BotDecision;
 import fr.astroware.chess.core.game.GameStatus;
 import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
+import fr.astroware.chess.core.model.PieceType;
 import fr.astroware.chess.core.model.PositionView;
 import fr.astroware.chess.core.rules.ChessRulesEngine;
 import fr.astroware.chess.core.rules.ChessRulesEngines;
@@ -125,7 +126,22 @@ class TacticalBotTest {
             new TacticalBot().decide(context(engine, Color.WHITE, position));
 
         assertEquals("Créer un double échec", selectedRule(decision));
-        assertEquals(Move.fromUci("e2b5"), decision.move());
+
+        PositionView after = engine.play(position, decision.move());
+
+        var blackKing = after.pieces(Color.BLACK).stream()
+            .filter(piece -> piece.piece().type() == PieceType.KING)
+            .findFirst()
+            .orElseThrow();
+
+        BotContext afterContext =
+            context(engine, Color.BLACK, after);
+
+        assertTrue(
+            afterContext.analysis()
+                .attackersOf(blackKing.square(), Color.WHITE)
+                .size() >= 2
+        );
     }
 
     @Test
