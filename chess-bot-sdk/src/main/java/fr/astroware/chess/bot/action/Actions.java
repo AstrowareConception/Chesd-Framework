@@ -11,6 +11,7 @@ import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
 import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
+import fr.astroware.chess.bot.situation.detection.MateRiskDetection;
 import fr.astroware.chess.bot.situation.detection.PinDetection;
 import fr.astroware.chess.bot.situation.detection.RemoveDefenderDetection;
 import fr.astroware.chess.bot.situation.detection.SkewerDetection;
@@ -50,6 +51,82 @@ public final class Actions {
                     "Coup légal choisi aléatoirement"
                 )
             );
+        };
+    }
+
+
+    /**
+     * Écarte les coups qui permettent un mat en un de l'adversaire, puis
+     * compare positionnellement les coups restants.
+     *
+     * <p>Si tous les coups autorisent un mat, l'action conserve quand même des
+     * candidats et pénalise ceux qui offrent le plus de réponses gagnantes.</p>
+     */
+    public static Action<MateRiskDetection> avoidMateInOne() {
+        return (context, detections) -> {
+            java.util.Map<Move, Integer> riskByMove =
+                detections.stream()
+                    .collect(
+                        java.util.stream.Collectors.toMap(
+                            MateRiskDetection::move,
+                            MateRiskDetection::opponentMateReplies
+                        )
+                    );
+
+            boolean hasSafeMove =
+                context.legalMoves().stream()
+                    .anyMatch(move ->
+                        !riskByMove.containsKey(move)
+                    );
+
+            return context.legalMoves().stream()
+                .filter(move ->
+                    !hasSafeMove
+                        || !riskByMove.containsKey(move)
+                )
+                .map(move -> {
+                    PositionProjection projection =
+                        context.analysis().after(move);
+
+                    var evaluation = projection.analysis()
+                        .positionEvaluation(context.myColor());
+
+                    int mateReplies =
+                        riskByMove.getOrDefault(move, 0);
+
+                    double score = hasSafeMove
+                        ? Math.max(
+                            8.0,
+                            evaluation.total()
+                        )
+                        : Math.clamp(
+                            evaluation.total()
+                                - mateReplies * 2.5,
+                            0.0,
+                            3.0
+                        );
+
+                    double safety = hasSafeMove
+                        ? Math.max(
+                            8.5,
+                            evaluation.kingSafety()
+                        )
+                        : 0.5;
+
+                    return EvaluatedMove.strategic(
+                        move,
+                        score,
+                        evaluation.centerControl(),
+                        safety,
+                        10.0 - safety,
+                        hasSafeMove
+                            ? "Évite un mat en un adverse"
+                            : "Tous les coups autorisent un mat : "
+                                + mateReplies
+                                + " réponse(s) de mat après ce coup"
+                    );
+                })
+                .toList();
         };
     }
 
