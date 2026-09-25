@@ -8,6 +8,7 @@ import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.search.MinimaxSearch;
 import fr.astroware.chess.bot.search.SearchSettings;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
+import fr.astroware.chess.bot.situation.detection.CastlingDetection;
 import fr.astroware.chess.bot.situation.detection.DiscoveredAttackDetection;
 import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
@@ -15,6 +16,7 @@ import fr.astroware.chess.bot.situation.detection.ForkDetection;
 import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
 import fr.astroware.chess.bot.situation.detection.MateRiskDetection;
 import fr.astroware.chess.bot.situation.detection.PinDetection;
+import fr.astroware.chess.bot.situation.detection.PromotionDetection;
 import fr.astroware.chess.bot.situation.detection.RemoveDefenderDetection;
 import fr.astroware.chess.bot.situation.detection.SkewerDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
@@ -202,6 +204,122 @@ public final class Actions {
     /**
      * Politique matérialiste volontairement simple.
      */
+
+    /**
+     * Évalue les promotions légales selon la valeur de la pièce obtenue et sa
+     * sécurité immédiate.
+     */
+    public static Action<PromotionDetection>
+        playBestPromotion() {
+
+        return (context, detections) ->
+            detections.stream()
+                .map(detection -> {
+                    PositionProjection projection =
+                        context.analysis()
+                            .after(detection.move());
+
+                    int pieceValue =
+                        projection.analysis()
+                            .pieceValues()
+                            .valueOf(
+                                detection.promotedTo()
+                            );
+
+                    Optional<Piece> promotedPiece =
+                        projection.position()
+                            .pieceAt(
+                                detection.move().to()
+                            );
+
+                    boolean attacked = false;
+                    boolean defended = false;
+
+                    if (promotedPiece.isPresent()) {
+                        PlacedPiece placed =
+                            new PlacedPiece(
+                                promotedPiece.orElseThrow(),
+                                detection.move().to()
+                            );
+
+                        attacked =
+                            projection.analysis()
+                                .isAttacked(placed);
+                        defended =
+                            projection.analysis()
+                                .isDefended(placed);
+                    }
+
+                    double safety = !attacked
+                        ? 9.0
+                        : defended ? 6.0 : 2.5;
+
+                    double score = Math.clamp(
+                        5.2
+                            + pieceValue * 0.48
+                            - (attacked && !defended
+                                ? 1.4
+                                : 0.0),
+                        0.0,
+                        10.0
+                    );
+
+                    return EvaluatedMove.strategic(
+                        detection.move(),
+                        score,
+                        7.5,
+                        safety,
+                        10.0 - safety,
+                        "Promotion en "
+                            + detection.promotedTo()
+                    );
+                })
+                .toList();
+    }
+
+    /**
+     * Évalue les roques légaux selon la position complète obtenue.
+     */
+    public static Action<CastlingDetection>
+        playBestCastle() {
+
+        return (context, detections) ->
+            detections.stream()
+                .map(detection -> {
+                    PositionProjection projection =
+                        context.analysis()
+                            .after(detection.move());
+
+                    var evaluation =
+                        projection.analysis()
+                            .positionEvaluation(
+                                context.myColor()
+                            );
+
+                    double safety =
+                        evaluation.kingSafety();
+
+                    double score = Math.clamp(
+                        evaluation.total() * 0.55
+                            + safety * 0.45,
+                        0.0,
+                        10.0
+                    );
+
+                    return EvaluatedMove.strategic(
+                        detection.move(),
+                        score,
+                        3.5,
+                        safety,
+                        10.0 - safety,
+                        detection.sideName()
+                            + " — "
+                            + evaluation.explanation()
+                    );
+                })
+                .toList();
+    }
+
     public static Action<CaptureDetection> captureHighestValue() {
         return (context, detections) -> detections.stream()
             .map(detection -> {
