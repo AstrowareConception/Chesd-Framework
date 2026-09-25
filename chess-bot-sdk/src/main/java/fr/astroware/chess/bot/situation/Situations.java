@@ -1,29 +1,33 @@
 package fr.astroware.chess.bot.situation;
 
 import fr.astroware.chess.bot.analysis.Analysis;
+import fr.astroware.chess.bot.analysis.PinPattern;
 import fr.astroware.chess.bot.analysis.PositionProjection;
+import fr.astroware.chess.bot.analysis.SkewerPattern;
 import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.rule.Situation;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
+import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
 import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
+import fr.astroware.chess.bot.situation.detection.PinDetection;
+import fr.astroware.chess.bot.situation.detection.SkewerDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
 import fr.astroware.chess.core.game.GameStatus;
 import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
 import fr.astroware.chess.core.model.Piece;
+import fr.astroware.chess.core.model.PieceType;
 import fr.astroware.chess.core.model.PlacedPiece;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Point d'entrée vers les situations fournies par le framework.
- *
- * <p>Le catalogue est volontairement progressif : chaque nouvelle situation
- * doit être réutilisable par plusieurs bots et s'appuyer sur les services
- * communs d'analyse plutôt que recalculer sa propre vision de l'échiquier.</p>
  */
 public final class Situations {
 
@@ -35,11 +39,17 @@ public final class Situations {
     }
 
     /**
+     * Situation reconnue lorsque le roi du bot est actuellement en échec.
+     */
+    public static Situation<PresenceDetection> inCheck() {
+        return context -> context.analysis().isKingAttacked()
+            ? List.of(PresenceDetection.INSTANCE)
+            : List.of();
+    }
+
+    /**
      * Détecte toutes les captures légales dont la destination contient une
      * pièce adverse.
-     *
-     * <p>La prise en passant sera ajoutée lorsque le moteur complet exposera
-     * explicitement cette information dans l'API de domaine.</p>
      */
     public static Situation<CaptureDetection> captureAvailable() {
         return context -> {
@@ -133,12 +143,54 @@ public final class Situations {
     }
 
     /**
+     * Détecte les coups légaux donnant échec.
+     */
+    public static Situation<CheckingMoveDetection> checkAvailable() {
+        return context -> {
+            List<CheckingMoveDetection> detections = new ArrayList<>();
+
+            for (Move move : context.legalMoves()) {
+                PositionProjection projection =
+                    context.analysis().after(move);
+
+                if (!projection.analysis().isKingAttacked()) {
+                    continue;
+                }
+
+                Optional<Piece> movedPiece =
+                    projection.position().pieceAt(move.to());
+
+                boolean attacked = false;
+                boolean defended = false;
+
+                if (movedPiece.isPresent()
+                    && movedPiece.orElseThrow().color() == context.myColor()) {
+                    PlacedPiece placed = new PlacedPiece(
+                        movedPiece.orElseThrow(),
+                        move.to()
+                    );
+
+                    attacked = projection.analysis().isAttacked(placed);
+                    defended = projection.analysis().isDefended(placed);
+                }
+
+                detections.add(
+                    new CheckingMoveDetection(
+                        move,
+                        projection.legalMoves().size(),
+                        attacked,
+                        defended
+                    )
+                );
+            }
+
+            return List.copyOf(detections);
+        };
+    }
+
+    /**
      * Détecte les coups créant une attaque simultanée sur au moins deux
      * pièces adverses.
-     *
-     * <p>Chaque coup légal est réellement simulé. La détection contient donc
-     * la pièce après son déplacement, ses cibles, leur valeur totale et la
-     * sécurité de l'attaquant dans la position obtenue.</p>
      */
     public static Situation<ForkDetection> forkOpportunity() {
         return context -> {
@@ -199,4 +251,103 @@ public final class Situations {
         };
     }
 
+    /**
+     * Détecte les coups qui créent un nouveau clouage absolu.
+     */
+    public static Situation<PinDetection> pinOpportunity() {
+        return context -> {
+            Set<PinPattern> before = new HashSet<>(
+                context.analysis().pinsBy(context.myColor())
+            );
+            List<PinDetection> detections = new ArrayList<>();
+
+            for (Move move : context.legalMoves()) {
+                PositionProjection projection =
+                    context.analysis().after(move);
+
+                for (PinPattern pattern
+                    : projection.analysis().pinsBy(context.myColor())) {
+
+                    if (before.contains(pattern)) {
+                        continue;
+                    }
+
+                    detections.add(
+                        new PinDetection(
+                            move,
+                            pattern,
+                            projection.analysis()
+                                .pieceValues()
+                                .valueOf(pattern.pinned().piece().type()),
+                            projection.analysis().isAttacked(
+                                pattern.attacker()
+                            ),
+                            projection.analysis().isDefended(
+                                pattern.attacker()
+                            )
+                        )
+                    );
+                }
+            }
+
+            return List.copyOf(detections);
+        };
+    }
+
+    /**
+     * Détecte les coups qui créent une nouvelle enfilade.
+     */
+    public static Situation<SkewerDetection> skewerOpportunity() {
+        return context -> {
+            Set<SkewerPattern> before = new HashSet<>(
+                context.analysis().skewersBy(context.myColor())
+            );
+            List<SkewerDetection> detections = new ArrayList<>();
+
+            for (Move move : context.legalMoves()) {
+                PositionProjection projection =
+                    context.analysis().after(move);
+
+                for (SkewerPattern pattern
+                    : projection.analysis().skewersBy(context.myColor())) {
+
+                    if (before.contains(pattern)) {
+                        continue;
+                    }
+
+                    detections.add(
+                        new SkewerDetection(
+                            move,
+                            pattern,
+                            tacticalValue(
+                                pattern.front().piece().type(),
+                                projection.analysis()
+                            ),
+                            tacticalValue(
+                                pattern.rear().piece().type(),
+                                projection.analysis()
+                            ),
+                            projection.analysis().isAttacked(
+                                pattern.attacker()
+                            ),
+                            projection.analysis().isDefended(
+                                pattern.attacker()
+                            )
+                        )
+                    );
+                }
+            }
+
+            return List.copyOf(detections);
+        };
+    }
+
+    private static int tacticalValue(
+        PieceType type,
+        Analysis analysis
+    ) {
+        return type == PieceType.KING
+            ? 100
+            : analysis.pieceValues().valueOf(type);
+    }
 }
