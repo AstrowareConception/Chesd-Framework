@@ -377,24 +377,29 @@ Pour les situations binaires simples, le SDK fournira une détection légère in
 
 ## 10. Action
 
-Une action transforme une ou plusieurs détections en proposition de coup.
+Une action transforme une ou plusieurs détections en **coups candidats évalués**.
 
 ```java
 @FunctionalInterface
 public interface Action<D extends Detection> {
 
-    Optional<Move> choose(
+    List<EvaluatedMove> evaluate(
         BotContext context,
         List<D> detections
     );
 }
 ```
 
+Un `EvaluatedMove` associe un coup à une note normalisée de 0 à 10, à une explication et éventuellement à un détail de critères.
+
 L'action :
 
-- peut comparer plusieurs opportunités ;
-- peut refuser de jouer ;
+- peut produire plusieurs opportunités ;
+- peut évaluer différemment plusieurs coups correspondant à la même situation ;
+- peut ne produire aucun candidat ;
 - ne peut pas forcer le moteur à accepter un coup illégal.
+
+La règle élimine les candidats illégaux puis choisit par défaut le candidat légal ayant la meilleure note.
 
 ---
 
@@ -450,17 +455,14 @@ for (Rule<?> rule : rules) {
 
     trace.add(attempt);
 
-    if (attempt.move().isEmpty()) {
+    if (attempt.status() != SELECTED) {
         continue;
     }
 
-    Move move = attempt.move().get();
-
-    if (context.legalMoves().contains(move)) {
-        return BotDecision.of(move, trace);
-    }
-
-    trace.markIllegal(move);
+    return BotDecision.of(
+        attempt.selectedMove().orElseThrow().move(),
+        trace
+    );
 }
 
 return fallbackDecision(context, trace);
@@ -583,7 +585,7 @@ Pattern Strategy :
 ```java
 @FunctionalInterface
 public interface PositionEvaluator {
-    double evaluate(PositionAnalysis position, Color perspective);
+    PositionEvaluation evaluate(BotContext context);
 }
 ```
 
@@ -609,10 +611,10 @@ Structures cibles :
 ```java
 public record RuleAttempt(
     String ruleName,
-    boolean matched,
-    int detections,
-    Optional<Move> proposedMove,
     AttemptStatus status,
+    int detectionCount,
+    List<EvaluatedMove> candidates,
+    Optional<EvaluatedMove> selectedMove,
     String explanation
 ) {}
 ```
