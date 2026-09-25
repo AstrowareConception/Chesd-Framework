@@ -7,17 +7,20 @@ import fr.astroware.chess.core.model.PlacedPiece;
 import java.util.Objects;
 
 /**
- * Sacrifice d'attraction du roi.
+ * Sacrifice candidat à une attraction du roi.
  *
- * <p>Le coup donne échec, le roi adverse peut légalement capturer la pièce
- * offerte, et la case d'arrivée est contrôlée par le camp attaquant.</p>
+ * <p>Le coup donne échec et le roi adverse peut légalement capturer la pièce
+ * offerte. Après cette capture, le camp attaquant dispose d'un gain tactique
+ * concret : mat en un ou capture matérielle supérieure au sacrifice.</p>
  */
 public record AttractionDetection(
     Move move,
     PlacedPiece sacrificedPiece,
     PlacedPiece king,
+    Move kingCaptureReply,
     int sacrificedValue,
-    int defendersOnSacrificeSquare
+    boolean followUpMateInOne,
+    int followUpCaptureValue
 ) implements Detection {
 
     public AttractionDetection {
@@ -27,11 +30,23 @@ public record AttractionDetection(
             "sacrificedPiece must not be null"
         );
         Objects.requireNonNull(king, "king must not be null");
+        Objects.requireNonNull(
+            kingCaptureReply,
+            "kingCaptureReply must not be null"
+        );
 
         if (sacrificedValue < 0
-            || defendersOnSacrificeSquare <= 0) {
+            || followUpCaptureValue < 0) {
             throw new IllegalArgumentException(
-                "attraction values are invalid"
+                "attraction values must be non-negative"
+            );
+        }
+
+        if (!followUpMateInOne
+            && followUpCaptureValue
+                <= sacrificedValue) {
+            throw new IllegalArgumentException(
+                "attraction must expose a concrete tactical follow-up"
             );
         }
     }
