@@ -9,7 +9,9 @@ import fr.astroware.chess.bot.search.MinimaxSearch;
 import fr.astroware.chess.bot.search.SearchSettings;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
 import fr.astroware.chess.bot.situation.detection.CastlingDetection;
+import fr.astroware.chess.bot.situation.detection.CenterImprovementDetection;
 import fr.astroware.chess.bot.situation.detection.DiscoveredAttackDetection;
+import fr.astroware.chess.bot.situation.detection.DevelopmentDetection;
 import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
@@ -978,6 +980,23 @@ public final class Actions {
                     );
                 })
                 .toList();
+    }
+
+
+    private static String signed(double value) {
+        return String.format(
+            java.util.Locale.ROOT,
+            "%+.2f",
+            value
+        );
+    }
+
+    private static String format(double value) {
+        return String.format(
+            java.util.Locale.ROOT,
+            "%.2f",
+            value
+        );
     }
 
     private static RiskAssessment assessCaptureRisk(
