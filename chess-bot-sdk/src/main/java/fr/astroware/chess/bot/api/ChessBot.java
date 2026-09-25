@@ -1,5 +1,6 @@
 package fr.astroware.chess.bot.api;
 
+import fr.astroware.chess.bot.evaluation.EvaluatedMove;
 import fr.astroware.chess.bot.rule.AttemptStatus;
 import fr.astroware.chess.bot.rule.Rule;
 import fr.astroware.chess.bot.rule.RuleAttempt;
@@ -14,9 +15,9 @@ import java.util.Optional;
  * Classe de base de tous les bots du framework.
  *
  * <p>Le framework contrôle l'algorithme général de décision : les règles sont
- * testées dans l'ordre et la première qui produit un coup légal gagne. C'est
- * une application du pattern Template Method combiné à une Chain of
- * Responsibility.</p>
+ * testées dans l'ordre et la première qui produit au moins un coup légal
+ * choisit son candidat le mieux évalué. C'est une application du pattern
+ * Template Method combiné à une Chain of Responsibility.</p>
  *
  * <p>Un étudiant étend cette classe, fournit l'identité de son bot puis
  * construit sa liste de règles. La méthode {@link #decide(BotContext)} est
@@ -59,7 +60,7 @@ public abstract class ChessBot {
 
             if (attempt.status() == AttemptStatus.SELECTED) {
                 return new BotDecision(
-                    attempt.proposedMove().orElseThrow(),
+                    attempt.selectedMove().orElseThrow().move(),
                     trace
                 );
             }
@@ -72,13 +73,22 @@ public abstract class ChessBot {
          * qu'il a oublié une règle de secours : si aucune règle ne sait jouer,
          * le framework choisit un coup légal aléatoire.
          */
-        Move fallback = legalMoves.get(context.random().nextInt(legalMoves.size()));
+        Move fallback = legalMoves.get(
+            context.random().nextInt(legalMoves.size())
+        );
+
+        EvaluatedMove evaluatedFallback = EvaluatedMove.of(
+            fallback,
+            5.0,
+            "Fallback aléatoire du framework"
+        );
 
         trace.add(new RuleAttempt(
             "Framework fallback",
             AttemptStatus.SELECTED,
             0,
-            Optional.of(fallback),
+            List.of(evaluatedFallback),
+            Optional.of(evaluatedFallback),
             "Aucune règle du bot n'a produit de coup légal"
         ));
 
