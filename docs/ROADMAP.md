@@ -139,21 +139,21 @@ Extensions prévues :
 
 Implémenter :
 
-- [ ] `Analysis`
-- [ ] `AttackMap`
-- [ ] cases attaquées
-- [ ] cases défendues
-- [ ] attaquants d'une case
-- [ ] défenseurs d'une case
-- [ ] nombre d'attaquants / défenseurs
-- [ ] matériel
-- [ ] balance matérielle
-- [ ] captures disponibles
+- [x] `Analysis`
+- [x] `AttackMap`
+- [x] cases attaquées
+- [x] cases défendues
+- [x] attaquants d'une case
+- [x] défenseurs d'une case
+- [x] nombre d'attaquants / défenseurs
+- [x] matériel
+- [x] balance matérielle
+- [x] captures disponibles
 - [ ] mobilité
 - [ ] contrôle du centre
 - [ ] projection après un coup
-- [ ] sécurité simple d'une pièce
-- [ ] détection de pièce pendue
+- [x] sécurité simple d'une pièce
+- [x] détection de pièce pendue
 
 **Critère :** une situation tactique ne doit pas recalculer elle-même les informations élémentaires du plateau.
 
@@ -200,7 +200,7 @@ Puis :
 
 - [x] coup légal aléatoire
 - [ ] jouer le coup détecté
-- [ ] meilleure capture matérielle
+- [x] meilleure capture matérielle
 - [ ] sortie d'échec
 - [ ] mat
 - [ ] sauver la pièce la plus chère
@@ -216,7 +216,9 @@ Puis :
 ## Phase 7 — Bots de référence
 
 - [x] `RandomBot`
-- [ ] `GreedyBot`
+- [x] `GreedyBot`
+- [x] `CautiousBot`
+- [x] `BerserkerBot`
 - [ ] `TacticalBot`
 - [x] `SolidPlannerBot` comme exemple pédagogique supplémentaire
 
