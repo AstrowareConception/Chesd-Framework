@@ -36,6 +36,36 @@ public interface Analysis {
     PieceValues pieceValues();
 
     /**
+     * Structure de pions du camp demandé.
+     */
+    PawnStructure pawnStructure(Color color);
+
+    /**
+     * État d'une colonne selon la présence de pions.
+     */
+    FileStatus fileStatus(fr.astroware.chess.core.model.BoardFile file);
+
+    /**
+     * Activité / mobilité relative normalisée de 0 à 10.
+     */
+    double mobilityScore(Color color);
+
+    /**
+     * Contrôle du centre normalisé de 0 à 10.
+     */
+    double centerControlScore(Color color);
+
+    /**
+     * Sécurité du roi normalisée de 0 à 10.
+     */
+    double kingSafetyScore(Color color);
+
+    /**
+     * Évaluation positionnelle globale du point de vue demandé.
+     */
+    PositionEvaluation positionEvaluation(Color color);
+
+    /**
      * Estimation heuristique de la grande phase de la partie.
      */
     GamePhase gamePhase();
