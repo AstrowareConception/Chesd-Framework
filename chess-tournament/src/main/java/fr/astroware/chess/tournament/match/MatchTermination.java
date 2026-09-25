@@ -5,5 +5,6 @@ package fr.astroware.chess.tournament.match;
  */
 public enum MatchTermination {
     NATURAL,
-    MOVE_LIMIT
+    MOVE_LIMIT,
+    FORFEIT
 }
