@@ -635,3 +635,77 @@ rule(
     Actions.playBestCastle()
 )
 ```
+
+
+---
+
+## 19. Menaces, développement et centre
+
+Le catalogue distingue maintenant trois niveaux de danger pour une pièce :
+
+```java
+Situations.attackedOwnPiece();
+Situations.underDefendedOwnPiece();
+Situations.hangingOwnPiece();
+```
+
+- **attaquée** : au moins un attaquant adverse ;
+- **sous-défendue** : plus d'attaquants que de défenseurs ;
+- **pendue** : attaquée et sans défenseur.
+
+Les trois niveaux peuvent réutiliser l'action :
+
+```java
+Actions.moveThreatenedPieceToSafety();
+```
+
+Exemple :
+
+```java
+rule(
+    "Réagir à une pièce sous-défendue",
+    Situations.underDefendedOwnPiece(),
+    Actions.moveThreatenedPieceToSafety()
+)
+```
+
+### Développement
+
+```java
+rule(
+    "Développer une pièce mineure",
+    Situations.developmentAvailable(),
+    Actions.playBestDevelopment()
+)
+```
+
+La détection mesure pour chaque coup :
+
+- le gain de contrôle du centre ;
+- le gain de mobilité ;
+- la pièce mineure développée.
+
+### Contrôle du centre
+
+```java
+rule(
+    "Améliorer le centre",
+    Situations.centerImprovementAvailable(),
+    Actions.playBestCenterImprovement()
+)
+```
+
+Seuls les coups qui améliorent réellement le score de centre sont retournés. L'explication de chaque candidat conserve le score avant, le score après et le gain.
+
+Ces briques sont particulièrement adaptées à l'ouverture :
+
+```java
+rule(
+    "Développement en ouverture",
+    Situations.onlyInPhase(
+        GamePhase.OPENING,
+        Situations.developmentAvailable()
+    ),
+    Actions.playBestDevelopment()
+)
+```
