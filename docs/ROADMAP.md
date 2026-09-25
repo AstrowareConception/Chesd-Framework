@@ -248,7 +248,9 @@ Puis :
 - [x] scoring
 - [x] seed
 - [x] mesure du temps par coup
-- [ ] capture des erreurs
+- [x] capture des exceptions de bot / forfait
+- [x] incidents de match structurés
+- [x] compteur de forfaits dans le classement
 - [ ] PGN
 - [x] classement
 - [x] rapport console
