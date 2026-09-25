@@ -4,82 +4,166 @@ Framework pédagogique Java destiné à la création de bots d'échecs et à l'o
 
 ## Vision
 
-Le projet fournit un moteur de jeu fiable et une API orientée objet permettant à un étudiant de créer un bot en étendant une classe `ChessBot`. Un bot est principalement décrit comme une suite ordonnée de règles :
+Le projet fournit un moteur de jeu fiable et une API orientée objet permettant à un étudiant de créer son propre joueur d'échecs en étendant `ChessBot`.
+
+Le comportement d'un bot reste volontairement lisible :
 
 ```text
-Situation reconnue -> Action à tenter
+Situation reconnue
+    ↓
+plusieurs coups candidats
+    ↓
+évaluation
+    ↓
+choix selon la stratégie du bot
 ```
 
-Le moteur parcourt les règles dans l'ordre. Lorsqu'une situation est détectée, l'action associée propose un coup. Si aucun coup légal ne peut être produit, le moteur continue avec la règle suivante.
+Un bot peut également suivre :
 
-L'objectif pédagogique est de faire travailler la programmation orientée objet, l'héritage, la composition, le polymorphisme, les interfaces, l'encapsulation, les génériques, les tests et plusieurs design patterns dans un projet ludique dont l'aboutissement est un tournoi de bots.
+- une **personnalité stratégique** : défensive, équilibrée, offensive, aventureuse ;
+- une **ouverture** connue tant que la partie reste dans son livre ;
+- des **plans multi-coups** comme prendre le centre, développer ou préparer le roque ;
+- des règles tactiques ordonnées ;
+- un fallback de sécurité.
+
+L'objectif pédagogique est de pratiquer la programmation orientée objet, l'héritage, la composition, le polymorphisme, les interfaces, l'encapsulation, les génériques, les tests, Git/GitHub et plusieurs design patterns dans un projet ludique dont l'aboutissement est un tournoi de bots.
 
 ## Principes
 
-- Java comme langage principal.
+- Java 25 LTS.
+- Maven multi-module.
 - API simple pour les étudiants, architecture interne rigoureuse.
 - Le framework gère les règles des échecs et la légalité des coups.
-- Les étudiants travaillent principalement sur le comportement de leur bot.
-- Les situations tactiques et stratégiques sont composables et réutilisables.
-- Les règles d'un bot sont ordonnées : la première action applicable produisant un coup légal gagne.
-- Chaque décision peut être tracée pour expliquer pourquoi un bot a joué un coup.
+- Les positions sont exposées en lecture seule.
+- Une situation peut produire plusieurs détections.
+- Une action peut produire plusieurs coups candidats.
+- Chaque candidat peut être noté de 0 à 10.
+- Le profil du bot peut privilégier l'agressivité, la sécurité ou la prise de risque.
+- Les plans stratégiques peuvent durer plusieurs coups sans imposer une séquence rigide.
+- Les ouvertures sont suivies tant qu'une ligne reste compatible et légale.
+- Les règles restent ordonnées : l'ordre exprime les priorités du bot.
+- Chaque décision peut être tracée et expliquée.
 - Les matchs sont reproductibles grâce à des graines aléatoires contrôlées.
-- Le moteur de tournoi impose les mêmes contraintes à tous les bots.
 - Les bots étudiants ont vocation à être intégrés par Pull Request.
 
-## Stack cible
+## Stack
 
 - **Java 25 LTS**
 - **Maven**
 - **JUnit**
-- moteur de règles d'échecs masqué derrière une interface interne afin de ne pas coupler l'API étudiante à une bibliothèque tierce
+- **JaCoCo**
+- **GitHub Actions**
+- moteur de règles d'échecs masqué derrière une interface interne
 - CLI de tournoi dans un premier temps
-- export PGN et rapports de tournoi
+- export PGN et rapports de tournoi à terme
 
-## Exemple d'utilisation visé
+## Exemple de bot stratégique
 
 ```java
 public final class MyBot extends ChessBot {
 
     @Override
-    public String name() {
-        return "MyBot";
+    public BotMetadata metadata() {
+        return new BotMetadata(
+            "Deep Rabbit",
+            "Alice Dupont",
+            "Bot solide qui privilégie la sécurité avant l'activité."
+        );
+    }
+
+    @Override
+    protected StrategyProfile strategyProfile() {
+        return StrategyProfiles.solid();
     }
 
     @Override
     protected List<Rule<?>> rules() {
         return List.of(
-            rule("Mat en un", Situations.mateInOne(), Actions.playDetectedMove()),
-            rule("Sortir d'échec", Situations.inCheck(), Actions.bestEscape()),
-            rule("Prendre une pièce pendue", Situations.hangingEnemyPiece(), Actions.captureHighestValue()),
-            rule("Créer une fourchette", Situations.forkOpportunity(), Actions.playDetectedMove()),
-            rule("Développer", Situations.canDevelopPiece(), Actions.developBestPiece()),
-            rule("Secours", Situations.always(), Actions.randomLegalMove())
+            // Les règles tactiques critiques viendront ici.
+
+            Openings.londonSystem().asRule(),
+            Openings.scandinavianDefense().asRule(),
+
+            Plans.castleKingside().asRule(),
+            Plans.developMinorPieces().asRule(),
+            Plans.takeCenter().asRule(),
+
+            rule(
+                "Secours",
+                Situations.always(),
+                Actions.randomLegalMove()
+            )
         );
     }
 }
 ```
 
-L'API exacte sera raffinée pendant l'implémentation ; cet exemple illustre l'expérience développeur recherchée.
+L'ordre est volontaire : ici le bot préfère mettre son roi à l'abri avant de chercher davantage d'espace central.
+
+Un autre étudiant peut conserver les mêmes briques mais changer :
+
+- leur ordre ;
+- le profil stratégique ;
+- les poids d'évaluation ;
+- les ouvertures ;
+- les plans ;
+- les situations ;
+- les actions.
+
+Il obtient alors un bot au comportement différent sans réécrire le moteur.
 
 ## Documentation
 
+- [Bien démarrer](docs/GETTING_STARTED.md)
 - [Spécifications fonctionnelles et pédagogiques](docs/SPECIFICATIONS.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Évaluation des positions et des coups](docs/EVALUATION.md)
+- [Stratégies, postures et plans multi-coups](docs/STRATEGIES.md)
+- [Ouvertures et répertoires](docs/OPENINGS.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Contribution des bots](CONTRIBUTING.md)
 
-## Bots de référence prévus
+## État actuel
+
+Déjà disponibles :
+
+- modèle objet de base : couleurs, pièces, cases, coups ;
+- notation UCI simple des coups ;
+- `ChessBot`, `Situation`, `Detection`, `Action`, `Rule` ;
+- candidats évalués de 0 à 10 ;
+- profils stratégiques ;
+- tolérance au risque ;
+- livres d'ouvertures ;
+- Système de Londres ;
+- Défense Scandinave ;
+- plans « prendre le centre », « développer les pièces mineures » et « préparer le petit roque » ;
+- `RandomBot` ;
+- `SolidPlannerBot` comme exemple pédagogique ;
+- tests unitaires et CI GitHub Actions.
+
+La prochaine grande brique est la couche d'analyse de position : `AttackMap`, attaquants, défenseurs, matériel, projections après un coup et sécurité des pièces.
+
+## Bots de référence prévus pour le tournoi
 
 1. **RandomBot** — joue un coup légal aléatoire.
-2. **GreedyBot** — privilégie les prises selon la valeur matérielle.
-3. **TacticalBot** — applique plusieurs règles tactiques simples et ordonnées.
+2. **GreedyBot** — privilégie les gains matériels immédiats.
+3. **TacticalBot** — exploite plusieurs motifs tactiques simples.
 
-Ces bots servent à tester une soumission et fournissent trois niveaux de comportement faciles à comprendre.
+`SolidPlannerBot` est actuellement un exemple pédagogique supplémentaire destiné à illustrer les ouvertures, les plans et les profils.
 
 ## Tournoi final
 
-Le format initial visé est un tournoi toutes rondes avec alternance des couleurs. Le moteur enregistre les résultats, les coups, les temps de décision, la raison de chaque choix lorsque le mode trace est actif, et produit des parties au format PGN.
+Le format initial visé est un tournoi toutes rondes avec alternance des couleurs.
 
-Le détail du protocole de tournoi sera figé avant le lancement de l'exercice étudiant.
+Le moteur devra enregistrer :
+
+- résultats ;
+- coups ;
+- temps de décision ;
+- traces des règles ;
+- candidats envisagés ;
+- raisons du choix ;
+- parties au format PGN ;
+- classement final.
+
+Les étudiants soumettront leur bot par Pull Request afin de pratiquer également le workflow GitHub.
