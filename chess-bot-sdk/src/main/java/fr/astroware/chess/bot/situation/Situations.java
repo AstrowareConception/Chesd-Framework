@@ -1,6 +1,7 @@
 package fr.astroware.chess.bot.situation;
 
 import fr.astroware.chess.bot.analysis.Analysis;
+import fr.astroware.chess.bot.analysis.OverloadedDefenderPattern;
 import fr.astroware.chess.bot.analysis.PinPattern;
 import fr.astroware.chess.bot.analysis.PositionProjection;
 import fr.astroware.chess.bot.analysis.SkewerPattern;
@@ -13,6 +14,7 @@ import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
 import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
 import fr.astroware.chess.bot.situation.detection.PinDetection;
+import fr.astroware.chess.bot.situation.detection.RemoveDefenderDetection;
 import fr.astroware.chess.bot.situation.detection.SkewerDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
 import fr.astroware.chess.core.game.GameStatus;
@@ -513,6 +515,84 @@ public final class Situations {
                             )
                         );
                     }
+                }
+            }
+
+            return List.copyOf(detections);
+        };
+    }
+
+
+    /**
+     * Détecte les captures qui éliminent un défenseur surchargé et rendent
+     * effectivement une ou plusieurs de ses anciennes cibles pendues.
+     */
+    public static Situation<RemoveDefenderDetection>
+        removeOverloadedDefenderOpportunity() {
+
+        return context -> {
+            List<RemoveDefenderDetection> detections =
+                new ArrayList<>();
+
+            Color opponent = context.myColor().opposite();
+            List<OverloadedDefenderPattern> overloads =
+                context.analysis().overloadedDefenders(opponent);
+
+            for (OverloadedDefenderPattern overload : overloads) {
+                for (Move move : context.legalMoves()) {
+                    if (!move.to().equals(
+                        overload.defender().square()
+                    )) {
+                        continue;
+                    }
+
+                    Optional<Piece> captured =
+                        context.position().pieceAt(move.to());
+
+                    if (captured.isEmpty()
+                        || captured.orElseThrow().color() != opponent) {
+                        continue;
+                    }
+
+                    PositionProjection projection =
+                        context.analysis().after(move);
+
+                    List<PlacedPiece> newlyHanging =
+                        overload.protectedTargets().stream()
+                            .map(target -> projection.position()
+                                .pieceAt(target.square())
+                                .filter(piece ->
+                                    piece.color() == opponent
+                                )
+                                .map(piece -> new PlacedPiece(
+                                    piece,
+                                    target.square()
+                                )))
+                            .flatMap(Optional::stream)
+                            .filter(projection.analysis()::isHanging)
+                            .toList();
+
+                    if (newlyHanging.isEmpty()) {
+                        continue;
+                    }
+
+                    int exposedValue = newlyHanging.stream()
+                        .map(PlacedPiece::piece)
+                        .map(Piece::type)
+                        .mapToInt(
+                            projection.analysis()
+                                .pieceValues()::valueOf
+                        )
+                        .sum();
+
+                    detections.add(
+                        new RemoveDefenderDetection(
+                            move,
+                            overload,
+                            newlyHanging,
+                            exposedValue
+                        )
+                    );
                 }
             }
 
