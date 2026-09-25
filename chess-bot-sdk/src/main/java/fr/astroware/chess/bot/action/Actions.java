@@ -39,6 +39,41 @@ public final class Actions {
     private Actions() {
     }
 
+
+    /**
+     * Transforme directement des détections portant un coup en candidats.
+     *
+     * <p>L'extracteur conserve l'API générique sans imposer une nouvelle
+     * hiérarchie à toutes les détections existantes.</p>
+     */
+    public static <D extends Detection> Action<D>
+        playDetectedMove(
+            Function<D, Move> moveExtractor
+        ) {
+
+        java.util.Objects.requireNonNull(
+            moveExtractor,
+            "moveExtractor must not be null"
+        );
+
+        return (context, detections) ->
+            detections.stream()
+                .map(moveExtractor)
+                .filter(java.util.Objects::nonNull)
+                .filter(
+                    context.legalMoves()::contains
+                )
+                .distinct()
+                .map(move ->
+                    EvaluatedMove.of(
+                        move,
+                        7.0,
+                        "Coup issu directement de la détection"
+                    )
+                )
+                .toList();
+    }
+
     public static <D extends Detection> Action<D> randomLegalMove() {
         return (context, detections) -> {
             List<Move> legalMoves = context.legalMoves();
