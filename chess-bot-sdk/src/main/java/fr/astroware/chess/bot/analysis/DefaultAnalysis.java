@@ -116,6 +116,67 @@ final class DefaultAnalysis implements Analysis {
     }
 
     @Override
+    public GamePhase gamePhase() {
+        int nonPawnMaterial = context.position().pieces().stream()
+            .map(PlacedPiece::piece)
+            .map(Piece::type)
+            .filter(type ->
+                type != fr.astroware.chess.core.model.PieceType.PAWN
+                    && type != fr.astroware.chess.core.model.PieceType.KING
+            )
+            .mapToInt(pieceValues::valueOf)
+            .sum();
+
+        long queens = context.position().pieces().stream()
+            .filter(piece ->
+                piece.piece().type()
+                    == fr.astroware.chess.core.model.PieceType.QUEEN
+            )
+            .count();
+
+        if (nonPawnMaterial <= 24
+            || (queens == 0 && nonPawnMaterial <= 32)) {
+            return GamePhase.ENDGAME;
+        }
+
+        int estimatedPly = estimatedPly();
+
+        if (estimatedPly < 24 && nonPawnMaterial >= 48) {
+            return GamePhase.OPENING;
+        }
+
+        return GamePhase.MIDDLEGAME;
+    }
+
+    private int estimatedPly() {
+        if (!context.moveHistory().isEmpty()) {
+            return context.moveHistory().size();
+        }
+
+        String fen = context.position().fen();
+
+        if (fen == null || fen.isBlank()) {
+            return 0;
+        }
+
+        String[] fields = fen.trim().split("\\s+");
+
+        if (fields.length < 6) {
+            return 0;
+        }
+
+        try {
+            int fullMove = Integer.parseInt(fields[5]);
+            int base = Math.max(0, (fullMove - 1) * 2);
+            boolean blackToMove = "b".equals(fields[1]);
+
+            return base + (blackToMove ? 1 : 0);
+        } catch (NumberFormatException exception) {
+            return 0;
+        }
+    }
+
+    @Override
     public boolean isKingAttacked() {
         String fen = context.position().fen();
 
