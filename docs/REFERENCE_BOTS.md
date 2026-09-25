@@ -75,6 +75,7 @@ Bot d'exemple combinant plusieurs couches :
 | ChameleonBot | variable | variable | variable | oui | Londres / Scandinave |
 | PositionalBot | globale / heuristique | forte | faible à moyen | oui | non |
 | LookaheadBot | globale + réponse adverse | forte | faible à moyen | oui | non |
+| MinimaxBot | Minimax profondeur 3 | dépend de la recherche | configurable | non | non |
 
 ## Prochaine cible
 
@@ -240,3 +241,34 @@ Actions.bestPositionAfterBestReply(8);
 Le nombre 8 représente une pré-sélection : seuls les huit meilleurs coups immédiats sont étudiés à profondeur 2.
 
 Ce bot sert de transition pédagogique vers Minimax.
+
+
+---
+
+## MinimaxBot
+
+```java
+MinimaxBot
+```
+
+MinimaxBot utilise une recherche récursive configurable :
+
+```java
+SearchSettings.bounded(3, 6);
+```
+
+Sa configuration de référence signifie :
+
+- profondeur 3 demi-coups ;
+- maximum 6 coups explorés par nœud ;
+- move ordering par évaluation positionnelle ;
+- élagage alpha-bêta actif.
+
+Le résultat de recherche conserve :
+
+- score Minimax ;
+- variante principale ;
+- nombre de nœuds visités ;
+- nombre de coupures alpha-bêta.
+
+Ce bot constitue l'étape suivante après `LookaheadBot`.
