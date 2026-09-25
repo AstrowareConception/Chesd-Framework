@@ -128,7 +128,9 @@ Extensions prévues :
 
 - [ ] plan d'attaque du roi
 - [ ] plan de simplification avec avantage matériel
-- [ ] plan de création d'un pion passé
+- [x] plan de création d'un pion passé
+- [x] plan de sécurité du roi
+- [x] plan d'occupation d'une colonne ouverte
 - [ ] plan d'attaque sur une aile
 - [ ] davantage d'ouvertures
 - [ ] arbre d'ouvertures optimisé si le catalogue devient volumineux
@@ -149,8 +151,8 @@ Implémenter :
 - [x] matériel
 - [x] balance matérielle
 - [x] captures disponibles
-- [ ] mobilité
-- [ ] contrôle du centre
+- [x] mobilité heuristique
+- [x] contrôle du centre
 - [x] projection après un coup
 - [x] cache de projection par décision
 - [x] phase de jeu
@@ -193,10 +195,10 @@ Puis :
 - élimination du défenseur
 - batterie
 - rayon X
-- pion passé
-- pion isolé
-- pion doublé
-- roi exposé
+- pion passé — [x]
+- pion isolé — [x]
+- pion doublé — [x]
+- roi exposé / sécurité du roi — [x]
 
 ---
 
@@ -211,9 +213,9 @@ Puis :
 - [x] meilleure fourchette
 - [ ] promotion
 - [ ] roque
-- [ ] meilleur coup selon un évaluateur
-- [ ] minimisation du risque
-- [ ] maximisation de l'activité
+- [x] meilleur coup selon un évaluateur
+- [x] évitement du mat en un / risque de roi
+- [x] activité via mobilité / centre
 
 ---
 
@@ -227,6 +229,7 @@ Puis :
 - [x] `TacticalBot`
 - [x] `PressureBot`
 - [x] `ChameleonBot`
+- [x] `PositionalBot`
 - [x] `SolidPlannerBot` comme exemple pédagogique supplémentaire
 
 ---
