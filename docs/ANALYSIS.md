@@ -203,3 +203,100 @@ analysis.overloadedDefenders(Color.BLACK);
 Un défenseur est actuellement considéré surchargé lorsqu'il est **l'unique défenseur d'au moins deux pièces déjà attaquées**.
 
 Le framework peut ensuite simuler la capture de ce défenseur et vérifier quelles cibles deviennent réellement pendues.
+
+
+---
+
+## Évaluation positionnelle globale
+
+Le framework fournit désormais :
+
+```java
+PositionEvaluation evaluation =
+    analysis.positionEvaluation(Color.WHITE);
+```
+
+La note globale et chaque composante sont normalisées de 0 à 10 :
+
+```java
+evaluation.total();
+evaluation.material();
+evaluation.mobility();
+evaluation.centerControl();
+evaluation.pawnStructure();
+evaluation.kingSafety();
+```
+
+La pondération varie selon la phase de jeu.
+
+### Ouverture
+
+La sécurité du roi et le centre comptent davantage.
+
+### Milieu de jeu
+
+Matériel, activité, centre et sécurité restent équilibrés.
+
+### Finale
+
+Le matériel et la structure de pions prennent davantage de poids.
+
+La note est volontairement **heuristique et explicable**, pas présentée comme une évaluation de moteur professionnel.
+
+---
+
+## Structure de pions
+
+```java
+PawnStructure structure =
+    analysis.pawnStructure(Color.WHITE);
+```
+
+Elle expose actuellement :
+
+- pions isolés ;
+- pions doublés ;
+- pions passés ;
+- pions passés protégés.
+
+Exemple :
+
+```java
+structure.isolatedCount();
+structure.doubledCount();
+structure.passedCount();
+```
+
+---
+
+## Colonnes ouvertes
+
+```java
+analysis.fileStatus(BoardFile.D);
+```
+
+Valeurs possibles :
+
+```java
+OPEN
+WHITE_SEMI_OPEN
+BLACK_SEMI_OPEN
+CLOSED
+```
+
+Ces informations servent notamment au plan d'activation des tours.
+
+---
+
+## Menace de mat en un
+
+Le framework peut maintenant examiner les réponses adverses après un coup candidat :
+
+```java
+Situations.mateInOneRisk();
+Actions.avoidMateInOne();
+```
+
+La règle compare les coups qui évitent le mat à l'aide de l'évaluation positionnelle.
+
+Un sacrifice peut être acceptable selon le profil ; offrir un mat immédiat adverse est traité comme une erreur de sécurité.
