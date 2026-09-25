@@ -22,5 +22,16 @@ public interface BotContext {
 
     List<Move> legalMoves();
 
+    /**
+     * Historique complet des demi-coups depuis le début de la partie.
+     *
+     * <p>La valeur par défaut permet aux contextes de test très simples de ne
+     * pas avoir à simuler tout un historique. Le moteur réel fournira cette
+     * information.</p>
+     */
+    default List<Move> moveHistory() {
+        return List.of();
+    }
+
     RandomGenerator random();
 }
