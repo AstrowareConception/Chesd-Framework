@@ -173,6 +173,18 @@ final class DefaultAnalysis implements Analysis {
     }
 
     @Override
+    public AdversarialEvaluation adversarialEvaluation(
+        Move move,
+        Color perspective
+    ) {
+        return AdversarialEvaluator.evaluate(
+            context,
+            move,
+            perspective
+        );
+    }
+
+    @Override
     public GamePhase gamePhase() {
         int nonPawnMaterial = context.position().pieces().stream()
             .map(PlacedPiece::piece)
