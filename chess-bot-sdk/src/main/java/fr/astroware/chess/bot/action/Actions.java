@@ -4,11 +4,14 @@ import fr.astroware.chess.bot.analysis.PositionProjection;
 import fr.astroware.chess.bot.evaluation.EvaluatedMove;
 import fr.astroware.chess.bot.rule.Action;
 import fr.astroware.chess.bot.rule.Detection;
+import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
+import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
 import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
+import fr.astroware.chess.bot.situation.detection.PinDetection;
+import fr.astroware.chess.bot.situation.detection.SkewerDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
-import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
 import fr.astroware.chess.core.model.Piece;
 import fr.astroware.chess.core.model.PlacedPiece;
@@ -45,6 +48,73 @@ public final class Actions {
                 )
             );
         };
+    }
+
+    /**
+     * Évalue toutes les sorties d'échec légales.
+     *
+     * <p>Le moteur ne fournit déjà que des coups légaux : chaque candidat
+     * résout donc l'échec. L'action privilégie ensuite le matériel conservé,
+     * les captures utiles et la sécurité de la pièce déplacée.</p>
+     */
+    public static Action<PresenceDetection> bestCheckEscape() {
+        return (context, detections) -> context.legalMoves().stream()
+            .map(move -> {
+                PositionProjection projection =
+                    context.analysis().after(move);
+
+                int materialAdvantage = projection.analysis()
+                    .materialBalance()
+                    .advantageFor(context.myColor());
+
+                boolean captures = context.position()
+                    .pieceAt(move.to())
+                    .filter(piece ->
+                        piece.color() == context.myColor().opposite()
+                    )
+                    .isPresent();
+
+                Optional<Piece> moved =
+                    projection.position().pieceAt(move.to());
+
+                boolean attacked = false;
+                boolean defended = false;
+
+                if (moved.isPresent()
+                    && moved.orElseThrow().color() == context.myColor()) {
+                    PlacedPiece placed = new PlacedPiece(
+                        moved.orElseThrow(),
+                        move.to()
+                    );
+                    attacked = projection.analysis().isAttacked(placed);
+                    defended = projection.analysis().isDefended(placed);
+                }
+
+                double safety = !attacked
+                    ? 9.0
+                    : defended ? 6.0 : 2.5;
+
+                double risk = 10.0 - safety;
+
+                double score = Math.clamp(
+                    7.5
+                        + materialAdvantage * 0.12
+                        + (captures ? 0.6 : 0.0)
+                        - (attacked && !defended ? 1.1 : 0.0),
+                    0.0,
+                    10.0
+                );
+
+                return EvaluatedMove.strategic(
+                    move,
+                    score,
+                    captures ? 6.5 : 3.0,
+                    safety,
+                    risk,
+                    "Sortie d'échec légale"
+                );
+            })
+            .toList();
     }
 
     /**
@@ -91,15 +161,6 @@ public final class Actions {
             .toList();
     }
 
-    /**
-     * Évalue une capture en tenant compte de la position réellement obtenue.
-     *
-     * <p>Lorsque le contexte possède un FEN complet, le coup est joué sur une
-     * projection du vrai moteur : les lignes ouvertes par la capture, les
-     * nouvelles attaques et les défenseurs sont donc pris en compte. Les
-     * contextes pédagogiques minimalistes sans FEN conservent l'heuristique
-     * locale afin de rester faciles à tester.</p>
-     */
     public static Action<CaptureDetection> captureWithRiskAwareness() {
         return (context, detections) -> detections.stream()
             .map(detection -> {
@@ -127,13 +188,6 @@ public final class Actions {
             .toList();
     }
 
-    /**
-     * Cherche les cases permettant de sauver une pièce pendue.
-     *
-     * <p>Chaque déplacement est réellement simulé. Une case où la pièce reste
-     * attaquée et non défendue reçoit donc une mauvaise note, même si elle
-     * semblait géométriquement éloignée du danger avant le déplacement.</p>
-     */
     public static Action<ThreatenedPieceDetection> moveThreatenedPieceToSafety() {
         return (context, detections) -> {
             List<EvaluatedMove> candidates = new ArrayList<>();
@@ -210,11 +264,6 @@ public final class Actions {
         };
     }
 
-
-    /**
-     * Joue un mat immédiat. Tous les candidats reçoivent naturellement la
-     * note maximale.
-     */
     public static Action<MateInOneDetection> playMateInOne() {
         return (context, detections) -> detections.stream()
             .map(detection -> EvaluatedMove.strategic(
@@ -229,9 +278,47 @@ public final class Actions {
     }
 
     /**
-     * Évalue les fourchettes selon la valeur totale des cibles et la sécurité
-     * de la pièce qui crée la tactique.
+     * Évalue les coups d'échec : moins l'adversaire possède de réponses,
+     * plus le coup est considéré comme forçant.
      */
+    public static Action<CheckingMoveDetection> playBestCheck() {
+        return (context, detections) -> detections.stream()
+            .map(detection -> {
+                double safety = !detection.movedPieceAttacked()
+                    ? 8.5
+                    : detection.movedPieceDefended() ? 6.0 : 2.5;
+
+                double risk = 10.0 - safety;
+                double forcingBonus = Math.max(
+                    0.0,
+                    2.2 - detection.opponentReplies() * 0.15
+                );
+
+                double score = Math.clamp(
+                    7.1
+                        + forcingBonus
+                        - (detection.movedPieceAttacked()
+                            && !detection.movedPieceDefended()
+                            ? 1.0
+                            : 0.0),
+                    0.0,
+                    9.8
+                );
+
+                return EvaluatedMove.strategic(
+                    detection.move(),
+                    score,
+                    9.0,
+                    safety,
+                    risk,
+                    "Échec laissant "
+                        + detection.opponentReplies()
+                        + " réponse(s) légale(s)"
+                );
+            })
+            .toList();
+    }
+
     public static Action<ForkDetection> playBestFork() {
         return (context, detections) -> detections.stream()
             .map(detection -> {
@@ -269,6 +356,85 @@ public final class Actions {
                         + detection.targets().size()
                         + " pièce(s), valeur totale "
                         + detection.targetValueSum()
+                );
+            })
+            .toList();
+    }
+
+    /**
+     * Évalue les nouveaux clouages selon la valeur de la pièce immobilisée et
+     * la sécurité de l'attaquant.
+     */
+    public static Action<PinDetection> playBestPin() {
+        return (context, detections) -> detections.stream()
+            .map(detection -> {
+                double safety = !detection.attackerAttacked()
+                    ? 9.0
+                    : detection.attackerDefended() ? 6.0 : 2.5;
+                double risk = 10.0 - safety;
+
+                double score = Math.clamp(
+                    6.0
+                        + detection.pinnedValue() * 0.35
+                        - (detection.attackerAttacked()
+                            && !detection.attackerDefended()
+                            ? 1.3
+                            : 0.0),
+                    0.0,
+                    9.4
+                );
+
+                return EvaluatedMove.strategic(
+                    detection.move(),
+                    score,
+                    7.5,
+                    safety,
+                    risk,
+                    "Clouage absolu de "
+                        + detection.pattern().pinned().piece().type()
+                        + " devant le roi"
+                );
+            })
+            .toList();
+    }
+
+    /**
+     * Évalue les enfilades selon la cible susceptible d'être gagnée derrière
+     * la pièce de forte valeur.
+     */
+    public static Action<SkewerDetection> playBestSkewer() {
+        return (context, detections) -> detections.stream()
+            .map(detection -> {
+                double safety = !detection.attackerAttacked()
+                    ? 9.0
+                    : detection.attackerDefended() ? 6.0 : 2.5;
+                double risk = 10.0 - safety;
+
+                double kingBonus =
+                    detection.frontValue() >= 100 ? 1.2 : 0.0;
+
+                double score = Math.clamp(
+                    5.8
+                        + detection.rearValue() * 0.42
+                        + kingBonus
+                        - (detection.attackerAttacked()
+                            && !detection.attackerDefended()
+                            ? 1.3
+                            : 0.0),
+                    0.0,
+                    9.6
+                );
+
+                return EvaluatedMove.strategic(
+                    detection.move(),
+                    score,
+                    8.5,
+                    safety,
+                    risk,
+                    "Enfilade : "
+                        + detection.pattern().front().piece().type()
+                        + " devant "
+                        + detection.pattern().rear().piece().type()
                 );
             })
             .toList();
