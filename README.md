@@ -146,10 +146,13 @@ Déjà disponibles :
 - `GreedyBot` ;
 - `CautiousBot` ;
 - `BerserkerBot` ;
+- `GuardianBot` ;
+- `TacticalBot` ;
 - `SolidPlannerBot` comme exemple pédagogique ;
+- `MatchRunner` pour faire jouer réellement deux bots avec une seed reproductible ;
 - tests unitaires et CI GitHub Actions.
 
-La couche d'analyse de base existe désormais. La prochaine grande brique est la **projection après un coup**, puis l'enrichissement tactique : sécurité après déplacement, fourchettes, clouages et enfilades.
+La couche d'analyse dispose désormais de la **projection après un coup**. Mat en un et fourchette sont déjà détectés par simulation réelle. Les prochaines tactiques visées sont le clouage, l'enfilade et l'attaque à la découverte.
 
 ## Bots de référence prévus pour le tournoi
 
