@@ -1,8 +1,9 @@
 package fr.astroware.chess.bot.rule;
 
 import fr.astroware.chess.bot.api.BotContext;
-import fr.astroware.chess.core.model.Move;
+import fr.astroware.chess.bot.evaluation.EvaluatedMove;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -10,6 +11,11 @@ import java.util.Optional;
 /**
  * Association entre une situation et l'action à tenter lorsqu'elle est
  * reconnue.
+ *
+ * <p>Une action peut produire plusieurs coups candidats évalués. La règle
+ * conserve uniquement les coups légaux puis choisit celui dont la note est
+ * la plus élevée. Ce comportement par défaut pourra ensuite être remplacé
+ * par une politique de sélection plus spécialisée si nécessaire.</p>
  *
  * @param <D> type de détection partagé par la situation et l'action
  */
@@ -51,47 +57,70 @@ public final class Rule<D extends Detection> {
                     name,
                     AttemptStatus.NOT_MATCHED,
                     0,
+                    List.of(),
                     Optional.empty(),
                     "Situation non détectée"
                 );
             }
 
-            Optional<Move> proposedMove = action.choose(context, detections);
+            List<EvaluatedMove> candidates = List.copyOf(
+                action.evaluate(context, detections)
+            );
 
-            if (proposedMove.isEmpty()) {
+            if (candidates.isEmpty()) {
                 return new RuleAttempt(
                     name,
                     AttemptStatus.MATCHED_NO_MOVE,
                     detections.size(),
+                    List.of(),
                     Optional.empty(),
-                    "Situation détectée mais aucune action applicable"
+                    "Situation détectée mais aucun coup candidat"
                 );
             }
 
-            Move move = proposedMove.orElseThrow();
+            List<EvaluatedMove> legalCandidates = new ArrayList<>();
 
-            if (!context.legalMoves().contains(move)) {
+            for (EvaluatedMove candidate : candidates) {
+                if (context.legalMoves().contains(candidate.move())) {
+                    legalCandidates.add(candidate);
+                }
+            }
+
+            if (legalCandidates.isEmpty()) {
                 return new RuleAttempt(
                     name,
                     AttemptStatus.ILLEGAL_PROPOSAL,
                     detections.size(),
-                    Optional.of(move),
-                    "L'action a proposé un coup illégal"
+                    candidates,
+                    Optional.empty(),
+                    "Aucun des coups candidats n'est légal"
                 );
+            }
+
+            EvaluatedMove best = legalCandidates.getFirst();
+
+            for (EvaluatedMove candidate : legalCandidates) {
+                if (candidate.score().compareTo(best.score()) > 0) {
+                    best = candidate;
+                }
             }
 
             return new RuleAttempt(
                 name,
                 AttemptStatus.SELECTED,
                 detections.size(),
-                Optional.of(move),
-                "Coup légal sélectionné"
+                candidates,
+                Optional.of(best),
+                "Meilleur coup légal sélectionné avec une note de "
+                    + best.score().value()
+                    + "/10"
             );
         } catch (RuntimeException exception) {
             return new RuleAttempt(
                 name,
                 AttemptStatus.ERROR,
                 0,
+                List.of(),
                 Optional.empty(),
                 exception.getClass().getSimpleName()
                     + ": "
