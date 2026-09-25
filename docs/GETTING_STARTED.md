@@ -412,11 +412,13 @@ La classe d'un bot doit rester la plus lisible possible.
 
 ## 13. Le moteur protège le bot
 
-Votre action propose un coup.
+Votre action peut proposer **plusieurs coups candidats**.
+
+Chaque candidat possède une note de 0 à 10 et peut expliquer les critères ayant conduit à cette note.
 
 Elle ne modifie jamais directement l'échiquier.
 
-Le framework vérifie ensuite que le coup appartient à la liste des coups légaux.
+Le framework élimine ensuite les candidats illégaux et choisit le candidat légal ayant la meilleure note.
 
 Une règle peut donc connaître quatre situations principales :
 
@@ -578,9 +580,51 @@ Le fichier `.github/pull_request_template.md` vous guidera lors du rendu.
 - votre bot possède une identité explicite ;
 - une règle associe une situation et une action ;
 - une situation produit des informations de détection ;
-- une action tente de transformer ces informations en coup ;
-- le framework vérifie la légalité ;
+- une action transforme ces informations en coups candidats évalués ;
+- chaque candidat peut recevoir une note de 0 à 10 ;
+- le framework vérifie la légalité puis retient le meilleur candidat ;
 - les règles sont testées dans l'ordre ;
 - le tournoi sera reproductible et automatisable.
 
 La suite du projet consistera à enrichir le vocabulaire disponible pour que vous puissiez écrire des comportements de plus en plus intéressants.
+
+
+---
+
+## 20. Évaluer plusieurs coups
+
+Une règle ne se limite pas à répondre :
+
+> « j'ai trouvé un coup ».
+
+Elle peut répondre :
+
+> « j'ai trouvé trois coups possibles, je les ai évalués, voici celui que je préfère ».
+
+Exemple :
+
+```text
+Bxc6  -> 6,2 / 10
+Nxe5  -> 5,7 / 10
+Qxa8  -> 9,1 / 10
+```
+
+Le framework représente cela avec `EvaluatedMove`.
+
+```java
+EvaluatedMove.of(
+    Move.of("d2", "d4"),
+    8.5,
+    "Bon contrôle du centre"
+);
+```
+
+La note n'est pas une vérité absolue. Elle exprime la préférence de votre stratégie.
+
+Un bot agressif et un bot prudent pourront donc attribuer des notes différentes au même coup.
+
+Pour approfondir ce mécanisme, lisez :
+
+```text
+docs/EVALUATION.md
+```
