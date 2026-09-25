@@ -2,6 +2,9 @@ package fr.astroware.chess.bot.rule;
 
 import fr.astroware.chess.bot.api.BotContext;
 import fr.astroware.chess.bot.evaluation.EvaluatedMove;
+import fr.astroware.chess.bot.evaluation.EvaluationScore;
+import fr.astroware.chess.bot.strategy.StrategyProfile;
+import fr.astroware.chess.bot.strategy.StrategyProfiles;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,9 +16,8 @@ import java.util.Optional;
  * reconnue.
  *
  * <p>Une action peut produire plusieurs coups candidats évalués. La règle
- * conserve uniquement les coups légaux puis choisit celui dont la note est
- * la plus élevée. Ce comportement par défaut pourra ensuite être remplacé
- * par une politique de sélection plus spécialisée si nécessaire.</p>
+ * conserve uniquement les coups légaux puis demande au profil stratégique du
+ * bot de départager les candidats.</p>
  *
  * @param <D> type de détection partagé par la situation et l'action
  */
@@ -43,11 +45,27 @@ public final class Rule<D extends Detection> {
     }
 
     /**
-     * Évalue complètement la règle et produit une trace exploitable par
-     * ChessBot.
+     * Évalue une règle avec un profil équilibré.
+     *
+     * <p>Cette surcharge reste pratique pour les tests unitaires et les usages
+     * simples hors d'un ChessBot.</p>
      */
     public RuleAttempt evaluate(BotContext context) {
+        return evaluate(context, StrategyProfiles.balanced());
+    }
+
+    /**
+     * Évalue complètement la règle avec la personnalité stratégique du bot.
+     */
+    public RuleAttempt evaluate(
+        BotContext context,
+        StrategyProfile strategyProfile
+    ) {
         Objects.requireNonNull(context, "context must not be null");
+        Objects.requireNonNull(
+            strategyProfile,
+            "strategyProfile must not be null"
+        );
 
         try {
             List<D> detections = List.copyOf(situation.detect(context));
@@ -98,10 +116,16 @@ public final class Rule<D extends Detection> {
             }
 
             EvaluatedMove best = legalCandidates.getFirst();
+            EvaluationScore bestPreference =
+                strategyProfile.preferenceScore(best);
 
             for (EvaluatedMove candidate : legalCandidates) {
-                if (candidate.score().compareTo(best.score()) > 0) {
+                EvaluationScore preference =
+                    strategyProfile.preferenceScore(candidate);
+
+                if (preference.compareTo(bestPreference) > 0) {
                     best = candidate;
+                    bestPreference = preference;
                 }
             }
 
@@ -111,8 +135,12 @@ public final class Rule<D extends Detection> {
                 detections.size(),
                 candidates,
                 Optional.of(best),
-                "Meilleur coup légal sélectionné avec une note de "
+                "Coup sélectionné par le profil « "
+                    + strategyProfile.name()
+                    + " » : score de base "
                     + best.score().value()
+                    + "/10, préférence effective "
+                    + bestPreference.value()
                     + "/10"
             );
         } catch (RuntimeException exception) {
