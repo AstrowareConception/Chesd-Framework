@@ -15,6 +15,10 @@
 
     <dependencies>
         <dependency>
+            <groupId>io.github.wolfraam</groupId>
+            <artifactId>chessgame</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
