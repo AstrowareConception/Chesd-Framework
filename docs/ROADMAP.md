@@ -37,7 +37,8 @@ La priorité suivante est le **workflow étudiant de tournoi** : validation auto
 - [x] ADR Java 25 / Maven
 - [x] ADR profils / plans / ouvertures
 - [ ] spike comparatif des bibliothèques de règles d'échecs
-- [ ] batterie de positions FEN et tests perft
+- [x] batterie de positions FEN ciblées
+- [ ] tests perft
 - [x] choix initial du backend de règles (`chessgame` 2.3)
 
 ---
@@ -81,12 +82,12 @@ La priorité suivante est le **workflow étudiant de tournoi** : validation auto
 - [x] FEN
 - [x] PGN
 - [ ] perft
-- [ ] roque
-- [ ] en passant
-- [ ] promotion
-- [ ] répétitions
-- [ ] règle des cinquante coups
-- [ ] matériel insuffisant
+- [x] roque
+- [x] en passant
+- [x] promotion
+- [x] répétitions
+- [x] règle des cinquante coups
+- [x] matériel insuffisant
 
 ---
 
@@ -177,9 +178,9 @@ Lot V1 :
 1. toujours vraie — [x]
 2. en échec — [x]
 3. mat en un — [x]
-4. capture disponible — [ ]
-5. pièce adverse pendue — [ ]
-6. pièce alliée pendue — [ ]
+4. capture disponible — [x]
+5. pièce adverse pendue — [x]
+6. pièce alliée pendue — [x]
 7. pièce attaquée — [ ]
 8. défense insuffisante — [ ]
 9. promotion disponible — [ ]
@@ -193,11 +194,11 @@ Lot V1 :
 Puis :
 
 - attaque à la découverte — [x]
-- double échec
+- double échec — [x]
 - surcharge — [x]
 - déviation
 - attraction
-- élimination du défenseur
+- élimination du défenseur surchargé — [x]
 - batterie
 - rayon X
 - pion passé — [x]
@@ -212,9 +213,9 @@ Puis :
 - [x] coup légal aléatoire
 - [ ] jouer le coup détecté
 - [x] meilleure capture matérielle
-- [ ] sortie d'échec
-- [ ] mat
-- [ ] sauver la pièce la plus chère
+- [x] sortie d'échec
+- [x] mat en un
+- [x] sauver une pièce pendue / menacée
 - [x] meilleure fourchette
 - [ ] promotion
 - [ ] roque
