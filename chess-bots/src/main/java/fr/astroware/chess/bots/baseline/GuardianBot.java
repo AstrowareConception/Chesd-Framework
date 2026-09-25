@@ -37,6 +37,21 @@ public final class GuardianBot extends ChessBot {
     protected List<Rule<?>> rules() {
         return List.of(
             rule(
+                "Mater immédiatement",
+                Situations.mateInOne(),
+                Actions.playMateInOne()
+            ),
+            rule(
+                "Sortir d'échec",
+                Situations.inCheck(),
+                Actions.bestCheckEscape()
+            ),
+            rule(
+                "Éviter un mat en un",
+                Situations.mateInOneRisk(),
+                Actions.avoidMateInOne()
+            ),
+            rule(
                 "Sauver une pièce pendue",
                 Situations.hangingOwnPiece(),
                 Actions.moveThreatenedPieceToSafety()
