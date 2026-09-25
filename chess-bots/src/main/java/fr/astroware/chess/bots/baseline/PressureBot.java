@@ -53,6 +53,11 @@ public final class PressureBot extends ChessBot {
                 Actions.bestCheckEscape()
             ),
             rule(
+                "Éviter un mat en un",
+                Situations.mateInOneRisk(),
+                Actions.avoidMateInOne()
+            ),
+            rule(
                 "Éliminer un défenseur surchargé",
                 Situations.removeOverloadedDefenderOpportunity(),
                 Actions.removeOverloadedDefender()
