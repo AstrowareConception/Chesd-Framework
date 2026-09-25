@@ -149,17 +149,53 @@ La forme cible est générique :
 
 ```java
 public interface Situation<T extends Detection> {
-    Optional<T> detect(BotContext context);
+    List<T> detect(BotContext context);
 }
 
 public interface Action<T extends Detection> {
-    Optional<Move> choose(BotContext context, T detection);
+    List<EvaluatedMove> evaluate(
+        BotContext context,
+        List<T> detections
+    );
 }
 ```
 
 Les étudiants utilisant uniquement les situations et actions fournies n'auront pas besoin de manipuler directement toute la complexité des génériques.
 
-### 4.3 Légalité
+### 4.3 Plusieurs coups candidats et notation
+
+Une situation peut conduire à plusieurs coups plausibles.
+
+Le framework utilise donc une échelle normalisée de **0 à 10** pour évaluer les candidats :
+
+- 0 : catastrophique ;
+- 5 : neutre ou moyen ;
+- 10 : excellent.
+
+Une action retourne une liste de `EvaluatedMove`. Chaque candidat contient :
+
+- le coup ;
+- sa note globale ;
+- éventuellement le détail des critères ;
+- une explication.
+
+La règle conserve tous les candidats dans sa trace, élimine les coups illégaux, puis sélectionne par défaut le candidat légal ayant la meilleure note.
+
+Exemple :
+
+```text
+Fourchette détectée
+
+Ne5  -> 8,6/10
+Nc7+ -> 9,2/10
+Nd6  -> 6,1/10
+
+Coup retenu : Nc7+
+```
+
+Cette mécanique permet à un bot d'expliquer non seulement le coup joué, mais également les alternatives qu'il a envisagées.
+
+### 4.4 Légalité
 
 Un bot ne décide jamais lui-même si un coup est légal au sens complet des règles des échecs.
 
@@ -175,7 +211,7 @@ Le contexte remis au bot doit être en lecture seule.
 
 ---
 
-### 4.4 Mémoire de partie et plans facultatifs
+### 4.5 Mémoire de partie et plans facultatifs
 
 Le modèle `Situation -> Action` est volontairement réactif et doit rester suffisant pour un premier bot.
 
@@ -409,7 +445,7 @@ Contrat cible :
 
 ```java
 public interface PositionEvaluator {
-    double evaluate(BotContext context, Color perspective);
+    PositionEvaluation evaluate(BotContext context);
 }
 ```
 
@@ -489,9 +525,11 @@ Tour 17 — AdaBot — Blancs
 [3] Prendre une pièce pendue
     situation: détectée
     cible: Tour noire en a8
-    candidats: Bxa8, Qxa8
+    candidats:
+      Bxa8 -> 7,4/10
+      Qxa8 -> 9,1/10
     action: captureHighestValue
-    coup choisi: Bxa8
+    coup choisi: Qxa8 (9,1/10)
 ```
 
 Le système de trace doit pouvoir être désactivé en tournoi pour éviter un coût inutile.
