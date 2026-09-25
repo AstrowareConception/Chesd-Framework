@@ -322,6 +322,135 @@ public final class Actions {
                 .toList();
     }
 
+
+    /**
+     * Évalue les coups de développement selon les gains de mobilité et de
+     * contrôle du centre, puis affine avec l'évaluation de la position
+     * projetée.
+     */
+    public static Action<DevelopmentDetection>
+        playBestDevelopment() {
+
+        return (context, detections) ->
+            detections.stream()
+                .map(detection -> {
+                    PositionProjection projection =
+                        context.analysis()
+                            .after(detection.move());
+
+                    var evaluation =
+                        projection.analysis()
+                            .positionEvaluation(
+                                context.myColor()
+                            );
+
+                    double gain =
+                        detection.centerGain() * 0.55
+                            + detection.mobilityGain() * 0.45;
+
+                    double score = Math.clamp(
+                        evaluation.total() * 0.72
+                            + 2.0
+                            + gain * 0.35,
+                        0.0,
+                        10.0
+                    );
+
+                    double aggression = Math.clamp(
+                        4.5
+                            + Math.max(
+                                0.0,
+                                detection.centerGain()
+                            ) * 0.45,
+                        0.0,
+                        10.0
+                    );
+
+                    double safety =
+                        evaluation.kingSafety();
+
+                    return EvaluatedMove.strategic(
+                        detection.move(),
+                        score,
+                        aggression,
+                        safety,
+                        10.0 - safety,
+                        "Développement de "
+                            + detection.pieceType()
+                            + " : centre "
+                            + signed(
+                                detection.centerGain()
+                            )
+                            + ", mobilité "
+                            + signed(
+                                detection.mobilityGain()
+                            )
+                    );
+                })
+                .toList();
+    }
+
+    /**
+     * Évalue les coups améliorant le contrôle du centre.
+     */
+    public static Action<CenterImprovementDetection>
+        playBestCenterImprovement() {
+
+        return (context, detections) ->
+            detections.stream()
+                .map(detection -> {
+                    PositionProjection projection =
+                        context.analysis()
+                            .after(detection.move());
+
+                    var evaluation =
+                        projection.analysis()
+                            .positionEvaluation(
+                                context.myColor()
+                            );
+
+                    double score = Math.clamp(
+                        4.5
+                            + detection.gain() * 0.85
+                            + evaluation.mobility() * 0.18
+                            + evaluation.total() * 0.20,
+                        0.0,
+                        10.0
+                    );
+
+                    double safety =
+                        evaluation.kingSafety();
+
+                    return EvaluatedMove.strategic(
+                        detection.move(),
+                        score,
+                        Math.clamp(
+                            5.0
+                                + detection.gain()
+                                    * 0.55,
+                            0.0,
+                            10.0
+                        ),
+                        safety,
+                        10.0 - safety,
+                        "Contrôle du centre : "
+                            + format(
+                                detection.beforeScore()
+                            )
+                            + " → "
+                            + format(
+                                detection.afterScore()
+                            )
+                            + " (gain "
+                            + format(
+                                detection.gain()
+                            )
+                            + ")"
+                    );
+                })
+                .toList();
+    }
+
     public static Action<CaptureDetection> captureHighestValue() {
         return (context, detections) -> detections.stream()
             .map(detection -> {
