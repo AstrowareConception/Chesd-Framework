@@ -20,6 +20,7 @@ import fr.astroware.chess.tournament.roundrobin.RoundRobinResult;
 import fr.astroware.chess.tournament.roundrobin.RoundRobinTournament;
 import fr.astroware.chess.tournament.roundrobin.StandingsCsvExporter;
 import fr.astroware.chess.tournament.roundrobin.TournamentParticipant;
+import fr.astroware.chess.tournament.submission.StudentSubmissionValidator;
 import fr.astroware.chess.tournament.ui.SwingMatchViewer;
 
 import java.io.IOException;
@@ -67,12 +68,43 @@ public final class ChessFrameworkCli {
             return;
         }
 
+        if ("validate-students".equals(mode)) {
+            validateStudents();
+            return;
+        }
+
         if (args.length < 3) {
             printUsage();
             return;
         }
 
         runDuel(mode, args);
+    }
+
+    private static void validateStudents() {
+        var report =
+            new StudentSubmissionValidator()
+                .validate();
+
+        if (report.validatedBots().isEmpty()) {
+            System.out.println(
+                "Aucun bot étudiant compilé à valider."
+            );
+            return;
+        }
+
+        System.out.println(
+            "Bots étudiants validés :"
+        );
+
+        report.validatedBots().forEach(bot ->
+            System.out.printf(
+                "  - %s — %s (%s)%n",
+                bot.metadata().botName(),
+                bot.metadata().authorName(),
+                bot.className()
+            )
+        );
     }
 
     private static void runDuel(
@@ -601,6 +633,7 @@ public final class ChessFrameworkCli {
 
             Usage :
               list
+              validate-students
               console <blancs> <noirs> [options]
               pgn     <blancs> <noirs> [fichier.pgn] [options]
               gui     <blancs> <noirs> [options]
