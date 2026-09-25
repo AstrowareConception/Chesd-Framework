@@ -71,6 +71,12 @@ public interface Analysis {
     GamePhase gamePhase();
 
     /**
+     * Coups légaux du camp au trait qui terminent immédiatement la partie
+     * par mat.
+     */
+    List<Move> mateInOneMoves();
+
+    /**
      * Indique si le roi du camp au trait est actuellement en échec.
      */
     boolean isKingAttacked();
