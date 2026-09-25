@@ -82,8 +82,17 @@ public final class ChameleonBot extends ChessBot {
             ),
 
             Plans.castleKingside().asRule(),
+            Plans.improveKingSafety().asRule(
+                Situations.inPhase(GamePhase.OPENING)
+            ),
             Plans.developMinorPieces().asRule(),
             Plans.takeCenter().asRule(),
+            Plans.useOpenFile().asRule(
+                Situations.inPhase(GamePhase.MIDDLEGAME)
+            ),
+            Plans.createPassedPawn().asRule(
+                Situations.inPhase(GamePhase.ENDGAME)
+            ),
 
             rule(
                 "Secours",
