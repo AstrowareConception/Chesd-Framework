@@ -149,11 +149,13 @@ Déjà disponibles :
 - `BerserkerBot` ;
 - `GuardianBot` ;
 - `TacticalBot` ;
+- `PressureBot` ;
+- `ChameleonBot` ;
 - `SolidPlannerBot` comme exemple pédagogique ;
 - `MatchRunner` pour faire jouer réellement deux bots avec une seed reproductible ;
 - tests unitaires et CI GitHub Actions.
 
-La couche d'analyse dispose désormais de la **projection après un coup**. Mat en un et fourchette sont déjà détectés par simulation réelle. Les prochaines tactiques visées sont le clouage, l'enfilade et l'attaque à la découverte.
+La couche d'analyse dispose désormais de la **projection après un coup**. Mat en un et fourchette sont déjà détectés par simulation réelle. Le catalogue couvre désormais mat en un, sortie d'échec, fourchette, clouage, enfilade, double échec, attaque à la découverte et surcharge d'un défenseur. Le framework sait aussi adapter une stratégie à l'ouverture, au milieu de jeu et à la finale.
 
 ## Bots de référence prévus pour le tournoi
 
