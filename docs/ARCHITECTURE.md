@@ -259,6 +259,54 @@ Une API avancée pourra éventuellement être prévue plus tard pour autoriser d
 
 ---
 
+### 7.1 Cycle de vie d'un bot
+
+Une instance de bot appartient à une seule partie. Cela autorise un état interne sans fuite entre deux matchs.
+
+```java
+public abstract class ChessBot {
+
+    public abstract String name();
+
+    protected abstract List<Rule<?>> rules();
+
+    protected void onGameStart(GameContext context) {}
+
+    protected void onMovePlayed(GameEvent event) {}
+
+    protected void onGameEnd(GameResult result) {}
+
+    public final BotDecision decide(BotContext context) {
+        // Template Method
+    }
+}
+```
+
+Le runner crée une nouvelle instance à chaque partie via `BotFactory`.
+
+Un étudiant peut donc utiliser des champs privés typés pour mémoriser une cible, une phase ou une intention sans avoir besoin d'un stockage générique peu sûr.
+
+### 7.2 Plans multi-coups
+
+La V1 reste centrée sur les règles ordonnées. L'architecture réserve néanmoins une extension facultative :
+
+```java
+public interface Plan {
+
+    String name();
+
+    boolean isApplicable(BotContext context);
+
+    Optional<Move> nextMove(BotContext context);
+
+    boolean isCompleted(BotContext context);
+}
+```
+
+Un plan n'est pas prioritaire pour la première livraison. Son rôle futur est de représenter une intention stratégique durable sans transformer `ChessBot` en machine à états codée en dur.
+
+---
+
 ## 8. Detection
 
 Une détection représente le résultat concret d'une situation.
