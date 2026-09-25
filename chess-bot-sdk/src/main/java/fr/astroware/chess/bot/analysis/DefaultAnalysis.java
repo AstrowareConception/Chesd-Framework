@@ -234,6 +234,20 @@ final class DefaultAnalysis implements Analysis {
     }
 
     @Override
+    public List<Move> mateInOneMoves() {
+        fr.astroware.chess.core.game.GameStatus winningStatus =
+            context.myColor() == Color.WHITE
+                ? fr.astroware.chess.core.game.GameStatus.WHITE_WINS
+                : fr.astroware.chess.core.game.GameStatus.BLACK_WINS;
+
+        return context.legalMoves().stream()
+            .filter(move ->
+                after(move).result().status() == winningStatus
+            )
+            .toList();
+    }
+
+    @Override
     public boolean isKingAttacked() {
         String fen = context.position().fen();
 
