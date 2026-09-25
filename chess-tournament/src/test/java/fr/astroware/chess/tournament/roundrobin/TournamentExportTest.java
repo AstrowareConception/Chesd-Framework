@@ -38,13 +38,13 @@ class TournamentExportTest {
             new StandingsCsvExporter().export(result);
 
         assertTrue(
-            pgn.contains("[White "Random Bot"]")
-                || pgn.contains("[Black "Random Bot"]")
+            pgn.contains("[White \"Random Bot\"]")
+                || pgn.contains("[Black \"Random Bot\"]")
         );
 
         assertTrue(
-            pgn.contains("[White "Greedy Bot"]")
-                || pgn.contains("[Black "Greedy Bot"]")
+            pgn.contains("[White \"Greedy Bot\"]")
+                || pgn.contains("[Black \"Greedy Bot\"]")
         );
 
         assertTrue(
@@ -53,7 +53,7 @@ class TournamentExportTest {
             )
         );
 
-        assertTrue(csv.contains(""Random Bot""));
-        assertTrue(csv.contains(""Greedy Bot""));
+        assertTrue(csv.contains("\"Random Bot\""));
+        assertTrue(csv.contains("\"Greedy Bot\""));
     }
 }
