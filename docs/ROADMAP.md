@@ -183,8 +183,8 @@ Lot V1 :
 6. pièce alliée pendue — [x]
 7. pièce attaquée — [ ]
 8. défense insuffisante — [ ]
-9. promotion disponible — [ ]
-10. roque disponible — [ ]
+9. promotion disponible — [x]
+10. roque disponible — [x]
 11. fourchette — [x]
 12. clouage — [x]
 13. enfilade — [x]
@@ -217,8 +217,8 @@ Puis :
 - [x] mat en un
 - [x] sauver une pièce pendue / menacée
 - [x] meilleure fourchette
-- [ ] promotion
-- [ ] roque
+- [x] promotion
+- [x] roque
 - [x] meilleur coup selon un évaluateur
 - [x] évitement du mat en un / risque de roi
 - [x] activité via mobilité / centre
