@@ -2,6 +2,7 @@ package fr.astroware.chess.tournament.cli;
 
 import fr.astroware.chess.bots.baseline.BerserkerBot;
 import fr.astroware.chess.bots.baseline.CautiousBot;
+import fr.astroware.chess.bots.baseline.ChameleonBot;
 import fr.astroware.chess.bots.baseline.GreedyBot;
 import fr.astroware.chess.bots.baseline.GuardianBot;
 import fr.astroware.chess.bots.baseline.RandomBot;
@@ -45,6 +46,7 @@ public final class BotCatalog {
         bots.put("random", RandomBot::new);
         bots.put("greedy", GreedyBot::new);
         bots.put("cautious", CautiousBot::new);
+        bots.put("chameleon", ChameleonBot::new);
         bots.put("berserker", BerserkerBot::new);
         bots.put("guardian", GuardianBot::new);
         bots.put("pressure", PressureBot::new);
