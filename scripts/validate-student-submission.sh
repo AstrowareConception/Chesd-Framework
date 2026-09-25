@@ -51,6 +51,7 @@ done
 if [[ ${#DISALLOWED[@]} -gt 0 ]]; then
   echo "::error::Une Pull Request de bot ne doit modifier que le package students et ses tests."
   printf '::error::Fichier non autorisé : %s\n' "${DISALLOWED[@]}"
+  echo "::error::Les pom.xml, le SDK, le moteur et le tournoi sont gelés pour une soumission de bot."
   exit 1
 fi
 
@@ -75,6 +76,34 @@ for file in "${STUDENT_MAIN_FILES[@]}"; do
       exit 1
     fi
   fi
+
+  # Contrôle statique volontairement simple : l'isolation JVM reste la
+  # protection d'exécution, mais une soumission pédagogique n'a aucune raison
+  # d'utiliser directement le réseau, le disque, les processus ou la réflexion.
+  if grep -Eq '^import[[:space:]]+java\.net\.' "$file"; then
+    echo "::error file=$file::Les API réseau java.net sont interdites dans un bot étudiant."
+    exit 1
+  fi
+
+  if grep -Eq '^import[[:space:]]+java\.nio\.file\.' "$file"; then
+    echo "::error file=$file::Les API d'accès fichiers java.nio.file sont interdites dans un bot étudiant."
+    exit 1
+  fi
+
+  if grep -Eq '^import[[:space:]]+java\.lang\.reflect\.' "$file"; then
+    echo "::error file=$file::La réflexion Java est interdite dans un bot étudiant."
+    exit 1
+  fi
+
+  if grep -Eq '^import[[:space:]]+java\.io\.(File|FileInputStream|FileOutputStream|FileReader|FileWriter|RandomAccessFile);' "$file"; then
+    echo "::error file=$file::L'accès direct aux fichiers est interdit dans un bot étudiant."
+    exit 1
+  fi
+
+  if grep -Eq '\b(ProcessBuilder|ClassLoader)\b|Runtime\.getRuntime[[:space:]]*\(|System\.exit[[:space:]]*\(' "$file"; then
+    echo "::error file=$file::Les processus, chargeurs de classes, Runtime et System.exit sont interdits dans un bot étudiant."
+    exit 1
+  fi
 done
 
 if [[ "$BOT_CLASS_COUNT" -ne 1 ]]; then
@@ -82,4 +111,5 @@ if [[ "$BOT_CLASS_COUNT" -ne 1 ]]; then
   exit 1
 fi
 
-echo "Structure Git de la soumission : OK"
+echo "Périmètre Git et API interdites : OK"
+echo "La compilation, les métadonnées et les smoke-tests isolés seront vérifiés par mvn verify."
