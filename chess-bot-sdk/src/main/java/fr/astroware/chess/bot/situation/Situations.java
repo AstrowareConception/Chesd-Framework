@@ -14,6 +14,7 @@ import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
 import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
+import fr.astroware.chess.bot.situation.detection.MateRiskDetection;
 import fr.astroware.chess.bot.situation.detection.PinDetection;
 import fr.astroware.chess.bot.situation.detection.RemoveDefenderDetection;
 import fr.astroware.chess.bot.situation.detection.SkewerDetection;
@@ -161,6 +162,35 @@ public final class Situations {
                 ))
                 .toList();
         };
+    }
+
+
+    /**
+     * Détecte les coups du bot qui autorisent un mat en un de l'adversaire.
+     *
+     * <p>La situation est vide lorsqu'aucun coup légal ne donne cette
+     * possibilité à l'adversaire.</p>
+     */
+    public static Situation<MateRiskDetection> mateInOneRisk() {
+        return context -> context.legalMoves().stream()
+            .map(move -> {
+                PositionProjection projection =
+                    context.analysis().after(move);
+
+                int mateReplies =
+                    projection.analysis().mateInOneMoves().size();
+
+                return mateReplies > 0
+                    ? Optional.of(
+                        new MateRiskDetection(
+                            move,
+                            mateReplies
+                        )
+                    )
+                    : Optional.<MateRiskDetection>empty();
+            })
+            .flatMap(Optional::stream)
+            .toList();
     }
 
     /**
