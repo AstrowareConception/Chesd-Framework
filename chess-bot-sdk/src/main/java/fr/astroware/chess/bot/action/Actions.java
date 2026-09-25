@@ -5,6 +5,8 @@ import fr.astroware.chess.bot.evaluation.EvaluatedMove;
 import fr.astroware.chess.bot.rule.Action;
 import fr.astroware.chess.bot.rule.Detection;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
+import fr.astroware.chess.bot.situation.detection.ForkDetection;
+import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
 import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
@@ -206,6 +208,70 @@ public final class Actions {
 
             return List.copyOf(candidates);
         };
+    }
+
+
+    /**
+     * Joue un mat immédiat. Tous les candidats reçoivent naturellement la
+     * note maximale.
+     */
+    public static Action<MateInOneDetection> playMateInOne() {
+        return (context, detections) -> detections.stream()
+            .map(detection -> EvaluatedMove.strategic(
+                detection.move(),
+                10.0,
+                10.0,
+                10.0,
+                0.0,
+                "Échec et mat immédiat"
+            ))
+            .toList();
+    }
+
+    /**
+     * Évalue les fourchettes selon la valeur totale des cibles et la sécurité
+     * de la pièce qui crée la tactique.
+     */
+    public static Action<ForkDetection> playBestFork() {
+        return (context, detections) -> detections.stream()
+            .map(detection -> {
+                double risk;
+                double safety;
+                double penalty;
+
+                if (!detection.attackerAttacked()) {
+                    risk = 2.0;
+                    safety = 9.0;
+                    penalty = 0.0;
+                } else if (detection.attackerDefended()) {
+                    risk = 5.0;
+                    safety = 6.0;
+                    penalty = 0.7;
+                } else {
+                    risk = 9.0;
+                    safety = 2.0;
+                    penalty = 2.0;
+                }
+
+                double score = Math.clamp(
+                    5.5 + detection.targetValueSum() * 0.45 - penalty,
+                    0.0,
+                    9.8
+                );
+
+                return EvaluatedMove.strategic(
+                    detection.move(),
+                    score,
+                    9.5,
+                    safety,
+                    risk,
+                    "Fourchette sur "
+                        + detection.targets().size()
+                        + " pièce(s), valeur totale "
+                        + detection.targetValueSum()
+                );
+            })
+            .toList();
     }
 
     private static RiskAssessment assessCaptureRisk(
