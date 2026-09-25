@@ -5,6 +5,7 @@ import fr.astroware.chess.bots.baseline.CautiousBot;
 import fr.astroware.chess.bots.baseline.GreedyBot;
 import fr.astroware.chess.bots.baseline.GuardianBot;
 import fr.astroware.chess.bots.baseline.RandomBot;
+import fr.astroware.chess.bots.baseline.PressureBot;
 import fr.astroware.chess.bots.baseline.TacticalBot;
 import fr.astroware.chess.bots.examples.SolidPlannerBot;
 import fr.astroware.chess.tournament.match.BotFactory;
@@ -46,6 +47,7 @@ public final class BotCatalog {
         bots.put("cautious", CautiousBot::new);
         bots.put("berserker", BerserkerBot::new);
         bots.put("guardian", GuardianBot::new);
+        bots.put("pressure", PressureBot::new);
         bots.put("tactical", TacticalBot::new);
         bots.put("architect", SolidPlannerBot::new);
 
