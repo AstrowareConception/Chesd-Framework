@@ -12,7 +12,9 @@ import fr.astroware.chess.core.rules.ChessRulesEngine;
 import fr.astroware.chess.core.rules.ChessRulesEngines;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.random.RandomGenerator;
 
@@ -24,6 +26,8 @@ final class DefaultAnalysis implements Analysis {
     private final BotContext context;
     private final AttackMap attackMap;
     private final PieceValues pieceValues;
+    private final Map<Move, PositionProjection> projectionCache =
+        new HashMap<>();
 
     DefaultAnalysis(BotContext context) {
         this.context = Objects.requireNonNull(context, "context must not be null");
@@ -140,7 +144,13 @@ final class DefaultAnalysis implements Analysis {
     @Override
     public PositionProjection after(Move move) {
         Objects.requireNonNull(move, "move must not be null");
+        return projectionCache.computeIfAbsent(
+            move,
+            this::createProjection
+        );
+    }
 
+    private PositionProjection createProjection(Move move) {
         String fen = context.position().fen();
 
         if (fen == null || fen.isBlank()) {
