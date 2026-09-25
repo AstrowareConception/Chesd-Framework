@@ -1,5 +1,6 @@
 package fr.astroware.chess.bot.api;
 
+import fr.astroware.chess.bot.analysis.Analysis;
 import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
 import fr.astroware.chess.core.model.PositionView;
@@ -31,6 +32,17 @@ public interface BotContext {
      */
     default List<Move> moveHistory() {
         return List.of();
+    }
+
+    /**
+     * Façade d'analyse de la position courante.
+     *
+     * <p>La première implémentation est construite à la demande. Le moteur de
+     * tournoi pourra plus tard fournir une version mise en cache si les
+     * analyses deviennent coûteuses.</p>
+     */
+    default Analysis analysis() {
+        return Analysis.of(this);
     }
 
     RandomGenerator random();
