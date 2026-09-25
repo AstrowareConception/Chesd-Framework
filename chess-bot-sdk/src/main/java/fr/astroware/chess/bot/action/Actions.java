@@ -12,6 +12,7 @@ import fr.astroware.chess.bot.situation.detection.CastlingDetection;
 import fr.astroware.chess.bot.situation.detection.CenterImprovementDetection;
 import fr.astroware.chess.bot.situation.detection.DiscoveredAttackDetection;
 import fr.astroware.chess.bot.situation.detection.DevelopmentDetection;
+import fr.astroware.chess.bot.situation.detection.DeflectionDetection;
 import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
@@ -22,6 +23,7 @@ import fr.astroware.chess.bot.situation.detection.PromotionDetection;
 import fr.astroware.chess.bot.situation.detection.RemoveDefenderDetection;
 import fr.astroware.chess.bot.situation.detection.SkewerDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
+import fr.astroware.chess.bot.situation.detection.XRayDetection;
 import fr.astroware.chess.core.model.Move;
 import fr.astroware.chess.core.model.Piece;
 import fr.astroware.chess.core.model.PlacedPiece;
@@ -732,6 +734,204 @@ public final class Actions {
      * Évalue les nouveaux clouages selon la valeur de la pièce immobilisée et
      * la sécurité de l'attaquant.
      */
+
+    /**
+     * Évalue les coups créant une batterie sur une cible adverse.
+     */
+    public static Action<BatteryDetection>
+        playBestBattery() {
+
+        return (context, detections) ->
+            detections.stream()
+                .map(detection -> {
+                    double safety =
+                        !detection.frontAttacked()
+                            ? 8.5
+                            : detection.frontDefended()
+                                ? 6.0
+                                : 3.0;
+
+                    double targetBonus =
+                        Math.min(
+                            4.0,
+                            detection.targetValue()
+                                * 0.45
+                        );
+
+                    return EvaluatedMove.strategic(
+                        detection.move(),
+                        Math.clamp(
+                            5.5
+                                + targetBonus
+                                + safety * 0.08,
+                            0.0,
+                            10.0
+                        ),
+                        8.0,
+                        safety,
+                        10.0 - safety,
+                        "Batterie sur "
+                            + detection.pattern()
+                                .target()
+                                .piece()
+                                .type()
+                            + " (valeur tactique "
+                            + detection.targetValue()
+                            + ")"
+                    );
+                })
+                .toList();
+    }
+
+    /**
+     * Évalue les coups créant une pression de rayon X.
+     */
+    public static Action<XRayDetection>
+        playBestXRay() {
+
+        return (context, detections) ->
+            detections.stream()
+                .map(detection -> {
+                    double safety =
+                        !detection.attackerAttacked()
+                            ? 8.0
+                            : detection.attackerDefended()
+                                ? 5.5
+                                : 2.5;
+
+                    double score =
+                        Math.clamp(
+                            4.5
+                                + Math.min(
+                                    2.0,
+                                    detection.blockerValue()
+                                        * 0.20
+                                )
+                                + Math.min(
+                                    3.0,
+                                    detection.targetValue()
+                                        * 0.35
+                                )
+                                + safety * 0.08,
+                            0.0,
+                            10.0
+                        );
+
+                    return EvaluatedMove.strategic(
+                        detection.move(),
+                        score,
+                        7.5,
+                        safety,
+                        10.0 - safety,
+                        "Rayon X à travers "
+                            + detection.pattern()
+                                .blocker()
+                                .piece()
+                                .type()
+                            + " vers "
+                            + detection.pattern()
+                                .target()
+                                .piece()
+                                .type()
+                    );
+                })
+                .toList();
+    }
+
+    /**
+     * Évalue la pression créée sur le défenseur unique d'une cible.
+     */
+    public static Action<DeflectionDetection>
+        playBestDeflection() {
+
+        return (context, detections) ->
+            detections.stream()
+                .map(detection -> {
+                    double materialGap =
+                        Math.max(
+                            0,
+                            detection.targetValue()
+                                - detection.defenderValue()
+                        );
+
+                    double score =
+                        Math.clamp(
+                            5.0
+                                + materialGap * 0.45
+                                + detection.addedAttackers()
+                                    * 0.65,
+                            0.0,
+                            10.0
+                        );
+
+                    return EvaluatedMove.strategic(
+                        detection.move(),
+                        score,
+                        7.5,
+                        5.0,
+                        5.0,
+                        "Déviation : pression sur "
+                            + detection.defender()
+                                .piece()
+                                .type()
+                            + ", défenseur unique de "
+                            + detection.protectedTarget()
+                                .piece()
+                                .type()
+                            + " ("
+                            + detection.addedAttackers()
+                            + " nouvel(aux) attaquant(s))"
+                    );
+                })
+                .toList();
+    }
+
+    /**
+     * Évalue les sacrifices d'attraction du roi disposant d'un gain tactique
+     * concret après la capture royale.
+     */
+    public static Action<AttractionDetection>
+        playBestAttraction() {
+
+        return (context, detections) ->
+            detections.stream()
+                .map(detection -> {
+                    double score =
+                        detection.followUpMateInOne()
+                            ? 10.0
+                            : Math.clamp(
+                                6.0
+                                    + (
+                                        detection.followUpCaptureValue()
+                                            - detection.sacrificedValue()
+                                    ) * 0.65,
+                                0.0,
+                                10.0
+                            );
+
+                    String followUp =
+                        detection.followUpMateInOne()
+                            ? "mat en un après capture du roi"
+                            : "capture suivante de valeur "
+                                + detection.followUpCaptureValue();
+
+                    return EvaluatedMove.strategic(
+                        detection.move(),
+                        score,
+                        10.0,
+                        2.5,
+                        8.5,
+                        "Attraction du roi par sacrifice de "
+                            + detection.sacrificedPiece()
+                                .piece()
+                                .type()
+                            + " ; "
+                            + followUp
+                    );
+                })
+                .toList();
+    }
+
     public static Action<PinDetection> playBestPin() {
         return (context, detections) -> detections.stream()
             .map(detection -> {
