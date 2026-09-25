@@ -4,6 +4,8 @@ import fr.astroware.chess.bot.evaluation.EvaluatedMove;
 import fr.astroware.chess.bot.rule.AttemptStatus;
 import fr.astroware.chess.bot.rule.Rule;
 import fr.astroware.chess.bot.rule.RuleAttempt;
+import fr.astroware.chess.bot.strategy.StrategyProfile;
+import fr.astroware.chess.bot.strategy.StrategyProfiles;
 import fr.astroware.chess.core.model.Move;
 
 import java.util.ArrayList;
@@ -16,12 +18,9 @@ import java.util.Optional;
  *
  * <p>Le framework contrôle l'algorithme général de décision : les règles sont
  * testées dans l'ordre et la première qui produit au moins un coup légal
- * choisit son candidat le mieux évalué. C'est une application du pattern
- * Template Method combiné à une Chain of Responsibility.</p>
- *
- * <p>Un étudiant étend cette classe, fournit l'identité de son bot puis
- * construit sa liste de règles. La méthode {@link #decide(BotContext)} est
- * finale afin que tous les bots simples respectent le même protocole.</p>
+ * choisit son candidat selon la personnalité stratégique du bot. C'est une
+ * application du pattern Template Method combiné à une Chain of
+ * Responsibility.</p>
  */
 public abstract class ChessBot {
 
@@ -34,6 +33,17 @@ public abstract class ChessBot {
      * Règles évaluées dans l'ordre.
      */
     protected abstract List<Rule<?>> rules();
+
+    /**
+     * Personnalité générale du bot.
+     *
+     * <p>La valeur par défaut est équilibrée. Un étudiant peut simplement
+     * redéfinir cette méthode pour obtenir un comportement plus défensif,
+     * offensif ou aventureux.</p>
+     */
+    protected StrategyProfile strategyProfile() {
+        return StrategyProfiles.balanced();
+    }
 
     /**
      * Exécute le cycle standard de décision.
@@ -52,10 +62,15 @@ public abstract class ChessBot {
             );
         }
 
+        StrategyProfile profile = Objects.requireNonNull(
+            strategyProfile(),
+            "strategyProfile must not return null"
+        );
+
         List<RuleAttempt> trace = new ArrayList<>();
 
         for (Rule<?> rule : List.copyOf(rules())) {
-            RuleAttempt attempt = rule.evaluate(context);
+            RuleAttempt attempt = rule.evaluate(context, profile);
             trace.add(attempt);
 
             if (attempt.status() == AttemptStatus.SELECTED) {
@@ -66,13 +81,6 @@ public abstract class ChessBot {
             }
         }
 
-        /*
-         * Filet de sécurité du framework.
-         *
-         * Un bot étudiant ne doit jamais perdre une partie uniquement parce
-         * qu'il a oublié une règle de secours : si aucune règle ne sait jouer,
-         * le framework choisit un coup légal aléatoire.
-         */
         Move fallback = legalMoves.get(
             context.random().nextInt(legalMoves.size())
         );
