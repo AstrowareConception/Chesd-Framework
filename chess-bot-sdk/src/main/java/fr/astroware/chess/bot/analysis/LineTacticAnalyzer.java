@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Analyse géométrique des tactiques de ligne : clouages et enfilades.
+ * Analyse géométrique des tactiques de ligne : clouages, enfilades, batteries et rayons X.
  */
 final class LineTacticAnalyzer {
 
@@ -104,6 +104,128 @@ final class LineTacticAnalyzer {
         return List.copyOf(patterns);
     }
 
+
+    /**
+     * Batteries de deux pièces coulissantes alliées alignées sur une cible
+     * adverse.
+     */
+    static List<BatteryPattern> batteriesBy(
+        PositionView position,
+        Color attackerColor
+    ) {
+        List<BatteryPattern> patterns =
+            new ArrayList<>();
+
+        for (PlacedPiece rear
+            : position.pieces(attackerColor)) {
+
+            for (int[] direction
+                : directions(rear.piece().type())) {
+
+                List<PlacedPiece> encountered =
+                    firstPiecesOnRay(
+                        position,
+                        rear.square(),
+                        direction,
+                        2
+                    );
+
+                if (encountered.size() != 2) {
+                    continue;
+                }
+
+                PlacedPiece front =
+                    encountered.get(0);
+
+                PlacedPiece target =
+                    encountered.get(1);
+
+                if (front.piece().color()
+                    != attackerColor) {
+                    continue;
+                }
+
+                if (!supportsDirection(
+                    front.piece().type(),
+                    direction
+                )) {
+                    continue;
+                }
+
+                if (target.piece().color()
+                    == attackerColor) {
+                    continue;
+                }
+
+                patterns.add(
+                    new BatteryPattern(
+                        rear,
+                        front,
+                        target
+                    )
+                );
+            }
+        }
+
+        return List.copyOf(patterns);
+    }
+
+    /**
+     * Pressions de rayon X exercées à travers exactement une pièce adverse.
+     */
+    static List<XRayPattern> xRaysBy(
+        PositionView position,
+        Color attackerColor
+    ) {
+        List<XRayPattern> patterns =
+            new ArrayList<>();
+
+        for (PlacedPiece attacker
+            : position.pieces(attackerColor)) {
+
+            for (int[] direction
+                : directions(
+                    attacker.piece().type()
+                )) {
+
+                List<PlacedPiece> encountered =
+                    firstPiecesOnRay(
+                        position,
+                        attacker.square(),
+                        direction,
+                        2
+                    );
+
+                if (encountered.size() != 2) {
+                    continue;
+                }
+
+                PlacedPiece blocker =
+                    encountered.get(0);
+
+                PlacedPiece target =
+                    encountered.get(1);
+
+                if (blocker.piece().color()
+                        == attackerColor
+                    || target.piece().color()
+                        == attackerColor) {
+                    continue;
+                }
+
+                patterns.add(
+                    new XRayPattern(
+                        attacker,
+                        blocker,
+                        target
+                    )
+                );
+            }
+        }
+
+        return List.copyOf(patterns);
+    }
+
     private static int tacticalValue(
         PlacedPiece piece,
         PieceValues values
@@ -111,6 +233,27 @@ final class LineTacticAnalyzer {
         return piece.piece().type() == PieceType.KING
             ? 100
             : values.valueOf(piece.piece().type());
+    }
+
+
+    private static boolean supportsDirection(
+        PieceType type,
+        int[] direction
+    ) {
+        boolean diagonal =
+            direction[0] != 0
+                && direction[1] != 0;
+
+        boolean orthogonal =
+            direction[0] == 0
+                || direction[1] == 0;
+
+        return switch (type) {
+            case QUEEN -> true;
+            case BISHOP -> diagonal;
+            case ROOK -> orthogonal;
+            case PAWN, KNIGHT, KING -> false;
+        };
     }
 
     private static int[][] directions(PieceType type) {
