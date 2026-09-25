@@ -45,6 +45,7 @@ L'objectif pédagogique est de pratiquer la programmation orientée objet, l'hé
 - Chaque décision peut être tracée et expliquée.
 - Les matchs sont reproductibles grâce à des graines aléatoires contrôlées.
 - Les bots étudiants ont vocation à être intégrés par Pull Request.
+- Le tournoi peut exécuter chaque bot dans une JVM enfant isolée avec timeout dur et plafond mémoire.
 
 ## Stack
 
@@ -241,3 +242,13 @@ mvn exec:java -Dexec.args="tournament tactical positional minimax --pgn=parties.
 ```
 
 Voir `docs/TOURNAMENT.md`.
+
+
+### Exécution isolée recommandée pour le tournoi
+
+```bash
+cd chess-tournament
+mvn exec:java -Dexec.args="tournament positional lookahead minimax --games=2 --isolated --timeout-ms=3000 --heap-mb=256"
+```
+
+En mode isolé, chaque bot tourne dans une JVM enfant. Une décision qui dépasse le timeout provoque un forfait sans bloquer le tournoi.
