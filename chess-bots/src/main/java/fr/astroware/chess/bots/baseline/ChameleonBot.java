@@ -50,6 +50,11 @@ public final class ChameleonBot extends ChessBot {
                 Situations.inCheck(),
                 Actions.bestCheckEscape()
             ),
+            rule(
+                "Éviter un mat en un",
+                Situations.mateInOneRisk(),
+                Actions.avoidMateInOne()
+            ),
 
             Openings.londonSystem().asRule(),
             Openings.scandinavianDefense().asRule(),
