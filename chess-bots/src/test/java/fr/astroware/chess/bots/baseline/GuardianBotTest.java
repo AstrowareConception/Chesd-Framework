@@ -38,7 +38,11 @@ class GuardianBotTest {
 
         assertEquals(
             "Sauver une pièce pendue",
-            decision.trace().getFirst().ruleName()
+            decision.trace().stream()
+                .filter(attempt -> attempt.selectedMove().isPresent())
+                .findFirst()
+                .orElseThrow()
+                .ruleName()
         );
 
         PositionProjection projection =
