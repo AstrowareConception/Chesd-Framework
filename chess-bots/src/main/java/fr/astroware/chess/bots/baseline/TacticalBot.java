@@ -14,9 +14,9 @@ import java.util.List;
 /**
  * Bot tactique de référence.
  *
- * <p>Il illustre la progression naturelle du framework : les mêmes règles
- * simples restent lisibles, mais certaines situations utilisent désormais la
- * projection de position pour détecter des motifs plus riches.</p>
+ * <p>Sa classe est volontairement lisible comme une liste de priorités. Elle
+ * sert d'exemple aux étudiants pour montrer qu'un comportement assez riche
+ * peut être construit par composition de situations et d'actions.</p>
  */
 public final class TacticalBot extends ChessBot {
 
@@ -25,7 +25,7 @@ public final class TacticalBot extends ChessBot {
         return new BotMetadata(
             "Tactical Bot",
             "AstroWare Conception",
-            "Bot de référence : mat immédiat, sécurité, prises et fourchettes."
+            "Bot tactique : mat, défense, fourchette, clouage, enfilade et échecs."
         );
     }
 
@@ -43,6 +43,11 @@ public final class TacticalBot extends ChessBot {
                 Actions.playMateInOne()
             ),
             rule(
+                "Sortir d'échec",
+                Situations.inCheck(),
+                Actions.bestCheckEscape()
+            ),
+            rule(
                 "Sauver une pièce pendue",
                 Situations.hangingOwnPiece(),
                 Actions.moveThreatenedPieceToSafety()
@@ -56,6 +61,21 @@ public final class TacticalBot extends ChessBot {
                 "Créer une fourchette",
                 Situations.forkOpportunity(),
                 Actions.playBestFork()
+            ),
+            rule(
+                "Créer un clouage",
+                Situations.pinOpportunity(),
+                Actions.playBestPin()
+            ),
+            rule(
+                "Créer une enfilade",
+                Situations.skewerOpportunity(),
+                Actions.playBestSkewer()
+            ),
+            rule(
+                "Donner échec",
+                Situations.checkAvailable(),
+                Actions.playBestCheck()
             ),
             rule(
                 "Capture tactique",
