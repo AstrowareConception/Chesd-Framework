@@ -38,7 +38,7 @@ La priorité suivante est la **couche d'analyse de position**, indispensable pou
 - [x] ADR profils / plans / ouvertures
 - [ ] spike comparatif des bibliothèques de règles d'échecs
 - [ ] batterie de positions FEN et tests perft
-- [ ] choix définitif du backend de règles
+- [x] choix initial du backend de règles (`chessgame` 2.3)
 
 ---
 
@@ -74,11 +74,11 @@ La priorité suivante est la **couche d'analyse de position**, indispensable pou
 
 ### Moteur
 
-- [ ] `GameState`
-- [ ] `GameResult`
-- [ ] `ChessRulesEngine`
-- [ ] adapter vers la bibliothèque choisie
-- [ ] FEN
+- [x] `GameStatus`
+- [x] `GameResult`
+- [x] `ChessRulesEngine`
+- [x] adapter vers `chessgame` 2.3
+- [x] FEN
 - [ ] PGN
 - [ ] perft
 - [ ] roque
@@ -151,7 +151,7 @@ Implémenter :
 - [x] captures disponibles
 - [ ] mobilité
 - [ ] contrôle du centre
-- [ ] projection après un coup
+- [x] projection après un coup
 - [x] sécurité simple d'une pièce
 - [x] détection de pièce pendue
 
@@ -165,7 +165,7 @@ Lot V1 :
 
 1. toujours vraie — [x]
 2. en échec — [ ]
-3. mat en un — [ ]
+3. mat en un — [x]
 4. capture disponible — [ ]
 5. pièce adverse pendue — [ ]
 6. pièce alliée pendue — [ ]
@@ -173,7 +173,7 @@ Lot V1 :
 8. défense insuffisante — [ ]
 9. promotion disponible — [ ]
 10. roque disponible — [ ]
-11. fourchette — [ ]
+11. fourchette — [x]
 12. clouage — [ ]
 13. enfilade — [ ]
 14. développement possible — [ ]
@@ -204,7 +204,7 @@ Puis :
 - [ ] sortie d'échec
 - [ ] mat
 - [ ] sauver la pièce la plus chère
-- [ ] meilleure fourchette
+- [x] meilleure fourchette
 - [ ] promotion
 - [ ] roque
 - [ ] meilleur coup selon un évaluateur
@@ -219,18 +219,19 @@ Puis :
 - [x] `GreedyBot`
 - [x] `CautiousBot`
 - [x] `BerserkerBot`
-- [ ] `TacticalBot`
+- [x] `GuardianBot`
+- [x] `TacticalBot`
 - [x] `SolidPlannerBot` comme exemple pédagogique supplémentaire
 
 ---
 
 ## Phase 8 — Moteur de partie et tournoi
 
-- [ ] match bot contre bot
+- [x] match bot contre bot
 - [ ] alternance des couleurs
 - [ ] toutes rondes
 - [ ] scoring
-- [ ] seed
+- [x] seed
 - [ ] temps par coup
 - [ ] capture des erreurs
 - [ ] PGN
