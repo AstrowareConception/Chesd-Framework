@@ -87,7 +87,7 @@ class TacticalBotTest {
     void createsSkewer() {
         ChessRulesEngine engine = ChessRulesEngines.standard();
         PositionView position = engine.fromFen(
-            "4r2k/4q3/8/8/8/8/8/R6K w - - 0 1"
+            "4r3/4q3/7k/8/8/8/8/R6K w - - 0 1"
         );
 
         BotDecision decision =
