@@ -536,3 +536,48 @@ plus de candidats
 ```
 
 Le bot de référence `LookaheadBot` utilise une shortlist de 8 coups.
+
+
+---
+
+## 17. Minimax et alpha-bêta
+
+Pour aller au-delà d'une seule réponse adverse :
+
+```java
+Actions.minimax(
+    SearchSettings.bounded(3, 6)
+);
+```
+
+La profondeur est exprimée en demi-coups.
+
+```text
+profondeur 1 : mon coup
+profondeur 2 : mon coup + réponse adverse
+profondeur 3 : mon coup + réponse adverse + ma réplique
+```
+
+Une recherche exhaustive peut être demandée :
+
+```java
+SearchSettings.exact(3);
+```
+
+mais son coût augmente très rapidement.
+
+Le réglage borné :
+
+```java
+SearchSettings.bounded(3, 6);
+```
+
+limite à six coups par nœud après move ordering.
+
+L'alpha-bêta est activé par défaut et peut être désactivé pour comparer :
+
+```java
+settings.withoutAlphaBeta();
+```
+
+Les traces affichent la variante principale, les nœuds visités et les coupures.
