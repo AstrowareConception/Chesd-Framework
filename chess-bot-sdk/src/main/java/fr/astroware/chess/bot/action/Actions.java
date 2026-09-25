@@ -579,6 +579,48 @@ public final class Actions {
             .toList();
     }
 
+
+    /**
+     * Évalue tous les coups légaux selon la qualité globale de la position
+     * obtenue.
+     *
+     * <p>Cette action constitue le pont entre les heuristiques positionnelles
+     * du framework et la mécanique générique d'\{@code EvaluatedMove\}.
+     * Chaque coup est simulé puis reçoit une note de 0 à 10.</p>
+     */
+    public static <D extends Detection> Action<D> bestPosition() {
+        return (context, detections) -> context.legalMoves().stream()
+            .map(move -> {
+                PositionProjection projection =
+                    context.analysis().after(move);
+
+                var evaluation = projection.analysis()
+                    .positionEvaluation(context.myColor());
+
+                double aggression = Math.clamp(
+                    (
+                        evaluation.mobility()
+                            + evaluation.centerControl()
+                    ) / 2.0,
+                    0.0,
+                    10.0
+                );
+
+                double safety = evaluation.kingSafety();
+                double risk = 10.0 - safety;
+
+                return EvaluatedMove.strategic(
+                    move,
+                    evaluation.total(),
+                    aggression,
+                    safety,
+                    risk,
+                    evaluation.explanation()
+                );
+            })
+            .toList();
+    }
+
     private static RiskAssessment assessCaptureRisk(
         fr.astroware.chess.bot.api.BotContext context,
         CaptureDetection detection
