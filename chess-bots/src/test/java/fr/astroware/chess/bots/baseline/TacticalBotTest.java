@@ -15,6 +15,7 @@ import java.util.Random;
 import java.util.random.RandomGenerator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TacticalBotTest {
 
@@ -25,9 +26,9 @@ class TacticalBotTest {
             "7k/8/5KQ1/8/8/8/8/8 w - - 0 1"
         );
 
-        BotContext context = context(engine, Color.WHITE, position);
+        BotDecision decision =
+            new TacticalBot().decide(context(engine, Color.WHITE, position));
 
-        BotDecision decision = new TacticalBot().decide(context);
         PositionView after = engine.play(position, decision.move());
 
         assertEquals(
@@ -36,8 +37,22 @@ class TacticalBotTest {
         );
         assertEquals(
             "Mater immédiatement",
-            decision.trace().getFirst().ruleName()
+            selectedRule(decision)
         );
+    }
+
+    @Test
+    void escapesCheckBeforeFollowingOtherPlans() {
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        PositionView position = engine.fromFen(
+            "4r2k/8/8/8/8/8/8/4K3 w - - 0 1"
+        );
+
+        BotDecision decision =
+            new TacticalBot().decide(context(engine, Color.WHITE, position));
+
+        assertTrue(engine.legalMoves(position).contains(decision.move()));
+        assertEquals("Sortir d'échec", selectedRule(decision));
     }
 
     @Test
@@ -47,19 +62,63 @@ class TacticalBotTest {
             "k7/3q1r2/8/8/2N5/8/8/K7 w - - 0 1"
         );
 
-        BotContext context = context(engine, Color.WHITE, position);
-
-        BotDecision decision = new TacticalBot().decide(context);
+        BotDecision decision =
+            new TacticalBot().decide(context(engine, Color.WHITE, position));
 
         assertEquals(Move.fromUci("c4e5"), decision.move());
+        assertEquals("Créer une fourchette", selectedRule(decision));
+    }
 
-        String selectedRule = decision.trace().stream()
+    @Test
+    void createsAbsolutePin() {
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        PositionView position = engine.fromFen(
+            "4k3/4n3/8/8/8/8/8/R6K w - - 0 1"
+        );
+
+        BotDecision decision =
+            new TacticalBot().decide(context(engine, Color.WHITE, position));
+
+        assertEquals(Move.fromUci("a1e1"), decision.move());
+        assertEquals("Créer un clouage", selectedRule(decision));
+    }
+
+    @Test
+    void createsSkewer() {
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        PositionView position = engine.fromFen(
+            "4r2k/4q3/8/8/8/8/8/R6K w - - 0 1"
+        );
+
+        BotDecision decision =
+            new TacticalBot().decide(context(engine, Color.WHITE, position));
+
+        assertEquals(Move.fromUci("a1e1"), decision.move());
+        assertEquals("Créer une enfilade", selectedRule(decision));
+    }
+
+    @Test
+    void givesForcingCheckWhenNoHigherPriorityTacticExists() {
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        PositionView position = engine.fromFen(
+            "7k/8/8/8/8/8/4R3/4K3 w - - 0 1"
+        );
+
+        BotDecision decision =
+            new TacticalBot().decide(context(engine, Color.WHITE, position));
+
+        PositionView after = engine.play(position, decision.move());
+
+        assertEquals("Donner échec", selectedRule(decision));
+        assertTrue(engine.isKingAttacked(after));
+    }
+
+    private static String selectedRule(BotDecision decision) {
+        return decision.trace().stream()
             .filter(attempt -> attempt.selectedMove().isPresent())
             .findFirst()
             .orElseThrow()
             .ruleName();
-
-        assertEquals("Créer une fourchette", selectedRule);
     }
 
     private static BotContext context(
