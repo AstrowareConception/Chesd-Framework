@@ -38,7 +38,7 @@ La priorité suivante est le **workflow étudiant de tournoi** : validation auto
 - [x] ADR profils / plans / ouvertures
 - [ ] spike comparatif des bibliothèques de règles d'échecs
 - [x] batterie de positions FEN ciblées
-- [ ] tests perft
+- [x] tests perft (position initiale, profondeurs 1 à 3)
 - [x] choix initial du backend de règles (`chessgame` 2.3)
 
 ---
@@ -81,7 +81,7 @@ La priorité suivante est le **workflow étudiant de tournoi** : validation auto
 - [x] adapter vers `chessgame` 2.3
 - [x] FEN
 - [x] PGN
-- [ ] perft
+- [x] perft
 - [x] roque
 - [x] en passant
 - [x] promotion
@@ -181,15 +181,15 @@ Lot V1 :
 4. capture disponible — [x]
 5. pièce adverse pendue — [x]
 6. pièce alliée pendue — [x]
-7. pièce attaquée — [ ]
-8. défense insuffisante — [ ]
+7. pièce attaquée — [x]
+8. défense insuffisante — [x]
 9. promotion disponible — [x]
 10. roque disponible — [x]
 11. fourchette — [x]
 12. clouage — [x]
 13. enfilade — [x]
-14. développement possible — [ ]
-15. contrôle du centre — [ ]
+14. développement possible — [x]
+15. contrôle du centre — [x]
 
 Puis :
 
