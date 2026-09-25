@@ -9,6 +9,7 @@ import fr.astroware.chess.bot.analysis.SkewerPattern;
 import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.rule.Situation;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
+import fr.astroware.chess.bot.situation.detection.CastlingDetection;
 import fr.astroware.chess.bot.situation.detection.DiscoveredAttackDetection;
 import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
@@ -16,6 +17,7 @@ import fr.astroware.chess.bot.situation.detection.ForkDetection;
 import fr.astroware.chess.bot.situation.detection.MateInOneDetection;
 import fr.astroware.chess.bot.situation.detection.MateRiskDetection;
 import fr.astroware.chess.bot.situation.detection.PinDetection;
+import fr.astroware.chess.bot.situation.detection.PromotionDetection;
 import fr.astroware.chess.bot.situation.detection.RemoveDefenderDetection;
 import fr.astroware.chess.bot.situation.detection.SkewerDetection;
 import fr.astroware.chess.bot.situation.detection.ThreatenedPieceDetection;
@@ -137,6 +139,70 @@ public final class Situations {
 
             return List.copyOf(detections);
         };
+    }
+
+
+    /**
+     * Détecte tous les coups légaux réalisant une promotion.
+     */
+    public static Situation<PromotionDetection>
+        promotionAvailable() {
+
+        return context -> context.legalMoves()
+            .stream()
+            .filter(move -> move.promotion().isPresent())
+            .map(move ->
+                new PromotionDetection(
+                    move,
+                    move.promotion().orElseThrow()
+                )
+            )
+            .toList();
+    }
+
+    /**
+     * Détecte les roques actuellement légaux.
+     *
+     * <p>Le moteur de règles ayant déjà filtré les coups illégaux, un
+     * déplacement horizontal du roi de deux colonnes correspond ici à un
+     * roque jouable.</p>
+     */
+    public static Situation<CastlingDetection>
+        castlingAvailable() {
+
+        return context -> context.legalMoves()
+            .stream()
+            .filter(move ->
+                context.position()
+                    .pieceAt(move.from())
+                    .filter(piece ->
+                        piece.color()
+                            == context.myColor()
+                    )
+                    .filter(piece ->
+                        piece.type()
+                            == PieceType.KING
+                    )
+                    .isPresent()
+            )
+            .filter(move ->
+                Math.abs(
+                    move.to().file().ordinal()
+                        - move.from()
+                            .file()
+                            .ordinal()
+                ) == 2
+            )
+            .map(move ->
+                new CastlingDetection(
+                    move,
+                    move.to().file().ordinal()
+                        > move.from()
+                            .file()
+                            .ordinal()
+                )
+            )
+            .toList();
     }
 
     public static Situation<CaptureDetection> hangingEnemyPiece() {
