@@ -320,12 +320,22 @@ public final class SwingMatchViewer {
                     boolean light =
                         (fileIndex + rankNumber) % 2 == 1;
 
-                    cell.setBackground(
+                    java.awt.Color baseColor =
                         light
                             ? new java.awt.Color(238, 238, 210)
-                            : new java.awt.Color(118, 150, 86)
-                    );
+                            : new java.awt.Color(118, 150, 86);
 
+                    if (positionIndex > 0) {
+                        PlayedMove last =
+                            result.playedMoves().get(positionIndex - 1);
+
+                        if (square.equals(last.decision().move().from())
+                            || square.equals(last.decision().move().to())) {
+                            baseColor = new java.awt.Color(246, 246, 105);
+                        }
+                    }
+
+                    cell.setBackground(baseColor);
                     cell.setToolTipText(square.notation());
                 }
             }
@@ -411,6 +421,12 @@ public final class SwingMatchViewer {
                         .append("\n");
                 }
             });
+        }
+
+        @Override
+        public void dispose() {
+            autoplay.stop();
+            super.dispose();
         }
 
         private static String symbol(Piece piece) {
