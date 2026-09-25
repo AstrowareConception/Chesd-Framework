@@ -69,19 +69,27 @@ Un étudiant doit pouvoir créer un bot en ajoutant principalement une classe :
 public final class AdaBot extends ChessBot {
 
     @Override
-    public String name() {
-        return "AdaBot";
+    public BotMetadata metadata() {
+        return new BotMetadata(
+            "Ada",
+            "Alice Dupont",
+            "Bot positionnel et prudent."
+        );
+    }
+
+    @Override
+    protected StrategyProfile strategyProfile() {
+        return StrategyProfiles.solid();
     }
 
     @Override
     protected List<Rule<?>> rules() {
         return List.of(
-            rule("Mat immédiat", Situations.mateInOne(), Actions.playDetectedMove()),
-            rule("Défense du roi", Situations.inCheck(), Actions.bestEscape()),
-            rule("Prise gratuite", Situations.hangingEnemyPiece(), Actions.captureHighestValue()),
-            rule("Fourchette", Situations.forkOpportunity(), Actions.playDetectedMove()),
-            rule("Roque", Situations.castlingAvailable(), Actions.castle()),
-            rule("Développement", Situations.canDevelopPiece(), Actions.developBestPiece()),
+            Openings.londonSystem().asRule(),
+            Openings.scandinavianDefense().asRule(),
+            Plans.castleKingside().asRule(),
+            Plans.developMinorPieces().asRule(),
+            Plans.takeCenter().asRule(),
             rule("Coup de secours", Situations.always(), Actions.randomLegalMove())
         );
     }
@@ -211,33 +219,41 @@ Le contexte remis au bot doit être en lecture seule.
 
 ---
 
-### 4.5 Mémoire de partie et plans facultatifs
+### 4.5 Plans multi-coups, profils et ouvertures
 
-Le modèle `Situation -> Action` est volontairement réactif et doit rester suffisant pour un premier bot.
+Le modèle `Situation -> Action` reste suffisant pour un premier bot, mais trois mécanismes supplémentaires permettent une stratégie plus cohérente.
 
-Cependant, un bot plus évolué doit pouvoir conserver une intention entre plusieurs coups. Exemples :
+#### StrategyProfile
 
-- préparer le roque sur plusieurs tours ;
-- poursuivre une pièce cible ;
-- conserver un objectif d'attaque sur une aile ;
-- se souvenir qu'un plan vient d'échouer ;
-- adapter son comportement à la phase de jeu.
+Un profil décrit les préférences générales du bot :
 
-Une instance de `ChessBot` est donc **limitée à une partie** et peut conserver un état interne typé.
+- agressivité ;
+- sécurité ;
+- tolérance au risque.
 
-Le framework doit fournir des hooks de cycle de vie sans obliger les étudiants à les utiliser :
+Ces valeurs modulent le choix entre plusieurs candidats appartenant à une même règle.
 
-```java
-protected void onGameStart(GameContext context) {}
+#### StrategicPlan
 
-protected void onMovePlayed(GameEvent event) {}
+Un plan poursuit un objectif sur plusieurs tours sans imposer une séquence rigide.
 
-protected void onGameEnd(GameResult result) {}
-```
+Exemples fournis :
 
-Une abstraction `Plan` pourra être ajoutée après la V1 pour les stratégies multi-coups. Elle ne doit pas remplacer les règles ordonnées : elle constitue une couche facultative destinée aux bots avancés.
+- prendre le centre ;
+- développer les pièces mineures ;
+- préparer et effectuer le petit roque.
 
-Ce choix permet de conserver une API extrêmement simple pour un débutant tout en évitant de condamner le framework à des bots purement opportunistes et sans continuité stratégique.
+Chaque plan expose un état et une progression de 0 à 10.
+
+#### OpeningBook
+
+Une ouverture suit l'historique précis de la partie.
+
+Tant qu'une ligne connue correspond encore et que son prochain coup est légal, elle produit des candidats.
+
+Dès que la partie sort du livre, l'ouverture ne bloque rien : le bot continue avec ses règles et plans suivants.
+
+Une instance de `ChessBot` reste limitée à une partie et pourra également conserver un état interne typé lorsque des stratégies réellement mémorielles seront nécessaires.
 
 ---
 
@@ -258,6 +274,9 @@ Le domaine public doit au minimum exposer les concepts suivants :
 - `Rule`
 - `Situation`
 - `Action`
+- `StrategyProfile`
+- `StrategicPlan`
+- `OpeningBook`
 
 Les objets de valeur doivent être immuables autant que possible.
 
