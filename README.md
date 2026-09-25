@@ -132,6 +132,10 @@ Déjà disponibles :
 
 - modèle objet de base : couleurs, pièces, cases, coups ;
 - `Analysis`, `AttackMap`, matériel, attaquants, défenseurs et pièces pendues ;
+- `PositionEvaluation` notée de 0 à 10 : matériel, mobilité, centre, pions et sécurité du roi ;
+- structures de pions : isolés, doublés, passés et passés protégés ;
+- colonnes ouvertes et semi-ouvertes ;
+- évitement des mats en un adverses ;
 - situations `captureAvailable()` et `hangingEnemyPiece()` ;
 - actions de capture matérialiste et prudente ;
 - notation UCI simple des coups ;
@@ -151,6 +155,7 @@ Déjà disponibles :
 - `TacticalBot` ;
 - `PressureBot` ;
 - `ChameleonBot` ;
+- `PositionalBot` ;
 - `SolidPlannerBot` comme exemple pédagogique ;
 - `MatchRunner` pour faire jouer réellement deux bots avec une seed reproductible ;
 - tests unitaires et CI GitHub Actions.
