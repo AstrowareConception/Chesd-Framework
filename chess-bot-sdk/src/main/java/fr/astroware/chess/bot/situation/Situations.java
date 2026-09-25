@@ -10,7 +10,9 @@ import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.rule.Situation;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
 import fr.astroware.chess.bot.situation.detection.CastlingDetection;
+import fr.astroware.chess.bot.situation.detection.CenterImprovementDetection;
 import fr.astroware.chess.bot.situation.detection.DiscoveredAttackDetection;
+import fr.astroware.chess.bot.situation.detection.DevelopmentDetection;
 import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
 import fr.astroware.chess.bot.situation.detection.ForkDetection;
@@ -207,6 +209,185 @@ public final class Situations {
 
     public static Situation<CaptureDetection> hangingEnemyPiece() {
         return captureAvailable().filter(CaptureDetection::targetIsHanging);
+    }
+
+
+    /**
+     * Détecte toutes les pièces du bot actuellement attaquées.
+     *
+     * <p>Contrairement à {@link #hangingOwnPiece()}, une pièce défendue reste
+     * détectée : l'étudiant peut ainsi distinguer « attaquée » de « pendue ».</p>
+     */
+    public static Situation<ThreatenedPieceDetection>
+        attackedOwnPiece() {
+
+        return context -> context.position()
+            .pieces(context.myColor())
+            .stream()
+            .filter(piece ->
+                piece.piece().type()
+                    != PieceType.KING
+            )
+            .filter(piece ->
+                context.analysis()
+                    .isAttacked(piece)
+            )
+            .map(piece ->
+                new ThreatenedPieceDetection(
+                    piece,
+                    context.analysis()
+                        .pieceValues()
+                        .valueOf(
+                            piece.piece().type()
+                        ),
+                    context.analysis()
+                        .attackersOf(
+                            piece.square(),
+                            context.myColor()
+                                .opposite()
+                        )
+                        .size(),
+                    context.analysis()
+                        .defendersOf(piece)
+                        .size()
+                )
+            )
+            .toList();
+    }
+
+    /**
+     * Détecte les pièces attaquées dont le nombre de défenseurs est
+     * strictement inférieur au nombre d'attaquants.
+     */
+    public static Situation<ThreatenedPieceDetection>
+        underDefendedOwnPiece() {
+
+        return attackedOwnPiece().filter(
+            detection ->
+                detection.defenders()
+                    < detection.attackers()
+        );
+    }
+
+    /**
+     * Détecte les coups qui développent un cavalier ou un fou encore présent
+     * sur sa case initiale.
+     */
+    public static Situation<DevelopmentDetection>
+        developmentAvailable() {
+
+        return context -> {
+            double centerBefore =
+                context.analysis()
+                    .centerControlScore(
+                        context.myColor()
+                    );
+
+            double mobilityBefore =
+                context.analysis()
+                    .mobilityScore(
+                        context.myColor()
+                    );
+
+            List<DevelopmentDetection> detections =
+                new ArrayList<>();
+
+            for (Move move : context.legalMoves()) {
+                Optional<Piece> source =
+                    context.position()
+                        .pieceAt(move.from());
+
+                if (source.isEmpty()
+                    || source.orElseThrow().color()
+                        != context.myColor()) {
+                    continue;
+                }
+
+                PieceType type =
+                    source.orElseThrow().type();
+
+                if (type != PieceType.KNIGHT
+                    && type != PieceType.BISHOP) {
+                    continue;
+                }
+
+                if (!isInitialMinorPieceSquare(
+                    context.myColor(),
+                    type,
+                    move.from()
+                )) {
+                    continue;
+                }
+
+                PositionProjection projection =
+                    context.analysis()
+                        .after(move);
+
+                double centerAfter =
+                    projection.analysis()
+                        .centerControlScore(
+                            context.myColor()
+                        );
+
+                double mobilityAfter =
+                    projection.analysis()
+                        .mobilityScore(
+                            context.myColor()
+                        );
+
+                detections.add(
+                    new DevelopmentDetection(
+                        move,
+                        type,
+                        centerAfter - centerBefore,
+                        mobilityAfter - mobilityBefore
+                    )
+                );
+            }
+
+            return List.copyOf(detections);
+        };
+    }
+
+    /**
+     * Détecte les coups qui augmentent strictement le score de contrôle du
+     * centre du camp du bot.
+     */
+    public static Situation<CenterImprovementDetection>
+        centerImprovementAvailable() {
+
+        return context -> {
+            double before =
+                context.analysis()
+                    .centerControlScore(
+                        context.myColor()
+                    );
+
+            return context.legalMoves()
+                .stream()
+                .map(move -> {
+                    double after =
+                        context.analysis()
+                            .after(move)
+                            .analysis()
+                            .centerControlScore(
+                                context.myColor()
+                            );
+
+                    return after > before + 1.0e-9
+                        ? Optional.of(
+                            new CenterImprovementDetection(
+                                move,
+                                before,
+                                after
+                            )
+                        )
+                        : Optional
+                            .<CenterImprovementDetection>empty();
+                })
+                .flatMap(Optional::stream)
+                .toList();
+        };
     }
 
     /**
@@ -742,6 +923,29 @@ public final class Situations {
             }
 
             return List.copyOf(detections);
+        };
+    }
+
+
+    private static boolean isInitialMinorPieceSquare(
+        Color color,
+        PieceType type,
+        Square square
+    ) {
+        int homeRank =
+            color == Color.WHITE ? 1 : 8;
+
+        if (square.rank().number() != homeRank) {
+            return false;
+        }
+
+        int file =
+            square.file().ordinal();
+
+        return switch (type) {
+            case KNIGHT -> file == 1 || file == 6;
+            case BISHOP -> file == 2 || file == 5;
+            default -> false;
         };
     }
 
