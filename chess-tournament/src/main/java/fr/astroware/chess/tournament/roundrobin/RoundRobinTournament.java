@@ -195,6 +195,14 @@ public final class RoundRobinTournament {
                 .orElseThrow()
                 .status();
 
+        match.incident().ifPresent(incident -> {
+            if (incident.offenderColor() == Color.WHITE) {
+                white.forfeits++;
+            } else {
+                black.forfeits++;
+            }
+        });
+
         switch (status) {
             case WHITE_WINS -> {
                 white.wins++;
@@ -269,6 +277,7 @@ public final class RoundRobinTournament {
         private int draws;
         private int losses;
         private int technicalDraws;
+        private int forfeits;
         private double points;
         private double totalDecisionMillis;
         private int decisionCount;
@@ -290,6 +299,7 @@ public final class RoundRobinTournament {
                 wins,
                 draws,
                 losses,
+                forfeits,
                 technicalDraws,
                 points,
                 average
