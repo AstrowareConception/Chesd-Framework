@@ -66,6 +66,14 @@ public interface Analysis {
     PositionEvaluation positionEvaluation(Color color);
 
     /**
+     * Évalue un coup après la meilleure réponse adverse.
+     */
+    AdversarialEvaluation adversarialEvaluation(
+        Move move,
+        Color perspective
+    );
+
+    /**
      * Estimation heuristique de la grande phase de la partie.
      */
     GamePhase gamePhase();
