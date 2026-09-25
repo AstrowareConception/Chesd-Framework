@@ -121,10 +121,6 @@ final class PositionEvaluator {
                 color.opposite()
             );
 
-            position.pieceAt(square).ifPresent(piece -> {
-                // Occupation du centre vaut davantage qu'un simple contrôle.
-            });
-
             var occupant = position.pieceAt(square);
 
             if (occupant.isPresent()) {
@@ -178,14 +174,6 @@ final class PositionEvaluator {
                 if (fileDelta == 0 && rankDelta == 0) {
                     continue;
                 }
-
-                offset(
-                    kingSquare,
-                    fileDelta,
-                    rankDelta
-                ).ifPresent(square -> {
-                    // La boucle principale comptabilise la pression ci-dessous.
-                });
 
                 Optional<Square> nearby =
                     offset(
