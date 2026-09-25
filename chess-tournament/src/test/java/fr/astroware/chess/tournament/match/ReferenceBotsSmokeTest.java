@@ -2,6 +2,7 @@ package fr.astroware.chess.tournament.match;
 
 import fr.astroware.chess.bots.baseline.ChameleonBot;
 import fr.astroware.chess.bots.baseline.GuardianBot;
+import fr.astroware.chess.bots.baseline.LookaheadBot;
 import fr.astroware.chess.bots.baseline.PressureBot;
 import fr.astroware.chess.bots.baseline.PositionalBot;
 import fr.astroware.chess.bots.baseline.TacticalBot;
@@ -42,6 +43,22 @@ class ReferenceBotsSmokeTest {
 
         assertFalse(result.playedMoves().isEmpty());
         assertTrue(result.pliesPlayed() <= 8);
+    }
+
+    @Test
+    void positionalAndLookaheadCanPlayTogether() {
+        MatchResult result = new MatchRunner().play(
+            PositionalBot::new,
+            LookaheadBot::new,
+            new MatchConfiguration(
+                6,
+                515151L,
+                java.util.Optional.empty()
+            )
+        );
+
+        assertFalse(result.playedMoves().isEmpty());
+        assertTrue(result.pliesPlayed() <= 6);
     }
 
     @Test
