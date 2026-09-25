@@ -271,6 +271,13 @@ public final class SwingMatchViewer {
                         + move.san()
                         + " — "
                         + move.bot().botName()
+                        + " ("
+                        + String.format(
+                            java.util.Locale.ROOT,
+                            "%.1f ms",
+                            move.decisionMillis()
+                        )
+                        + ")"
                 );
             }
         }
@@ -375,6 +382,16 @@ public final class SwingMatchViewer {
 
             text.append("Bot : ")
                 .append(move.bot().botName())
+                .append("\n");
+
+            text.append("Temps : ")
+                .append(
+                    String.format(
+                        java.util.Locale.ROOT,
+                        "%.2f ms",
+                        move.decisionMillis()
+                    )
+                )
                 .append("\n");
 
             move.decision().trace().stream()
