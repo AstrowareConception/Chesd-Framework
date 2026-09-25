@@ -568,6 +568,21 @@ tournoi
 
 Le fichier `.github/pull_request_template.md` vous guidera lors du rendu.
 
+Pour la procédure complète de tournoi — emplacement imposé, validation, isolation JVM, clé `student-*`, mini-tournoi local et Pull Request — consultez :
+
+```text
+docs/STUDENT_TOURNAMENT_BOT.md
+```
+
+Avant le rendu final :
+
+```bash
+mvn verify
+mvn install
+cd chess-tournament
+mvn exec:java -Dexec.args="validate-students"
+```
+
 ---
 
 ## 19. Ce qu'il faut retenir
