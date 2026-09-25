@@ -25,7 +25,7 @@ public final class TacticalBot extends ChessBot {
         return new BotMetadata(
             "Tactical Bot",
             "AstroWare Conception",
-            "Bot tactique : mat, défense, fourchette, clouage, enfilade et échecs."
+            "Bot tactique : mat, défense, double échec, fourchette, clouage, enfilade et découverte."
         );
     }
 
@@ -58,6 +58,11 @@ public final class TacticalBot extends ChessBot {
                 Actions.captureHighestValue()
             ),
             rule(
+                "Créer un double échec",
+                Situations.doubleCheckOpportunity(),
+                Actions.playDoubleCheck()
+            ),
+            rule(
                 "Créer une fourchette",
                 Situations.forkOpportunity(),
                 Actions.playBestFork()
@@ -71,6 +76,11 @@ public final class TacticalBot extends ChessBot {
                 "Créer une enfilade",
                 Situations.skewerOpportunity(),
                 Actions.playBestSkewer()
+            ),
+            rule(
+                "Attaque à la découverte",
+                Situations.discoveredAttackOpportunity(),
+                Actions.playBestDiscoveredAttack()
             ),
             rule(
                 "Donner échec",
