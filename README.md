@@ -118,6 +118,8 @@ Il obtient alors un bot au comportement différent sans réécrire le moteur.
 - [Spécifications fonctionnelles et pédagogiques](docs/SPECIFICATIONS.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Évaluation des positions et des coups](docs/EVALUATION.md)
+- [Analyse de position](docs/ANALYSIS.md)
+- [Bots de référence](docs/REFERENCE_BOTS.md)
 - [Stratégies, postures et plans multi-coups](docs/STRATEGIES.md)
 - [Ouvertures et répertoires](docs/OPENINGS.md)
 - [Roadmap](docs/ROADMAP.md)
@@ -128,6 +130,9 @@ Il obtient alors un bot au comportement différent sans réécrire le moteur.
 Déjà disponibles :
 
 - modèle objet de base : couleurs, pièces, cases, coups ;
+- `Analysis`, `AttackMap`, matériel, attaquants, défenseurs et pièces pendues ;
+- situations `captureAvailable()` et `hangingEnemyPiece()` ;
+- actions de capture matérialiste et prudente ;
 - notation UCI simple des coups ;
 - `ChessBot`, `Situation`, `Detection`, `Action`, `Rule` ;
 - candidats évalués de 0 à 10 ;
@@ -138,10 +143,13 @@ Déjà disponibles :
 - Défense Scandinave ;
 - plans « prendre le centre », « développer les pièces mineures » et « préparer le petit roque » ;
 - `RandomBot` ;
+- `GreedyBot` ;
+- `CautiousBot` ;
+- `BerserkerBot` ;
 - `SolidPlannerBot` comme exemple pédagogique ;
 - tests unitaires et CI GitHub Actions.
 
-La prochaine grande brique est la couche d'analyse de position : `AttackMap`, attaquants, défenseurs, matériel, projections après un coup et sécurité des pièces.
+La couche d'analyse de base existe désormais. La prochaine grande brique est la **projection après un coup**, puis l'enrichissement tactique : sécurité après déplacement, fourchettes, clouages et enfilades.
 
 ## Bots de référence prévus pour le tournoi
 
