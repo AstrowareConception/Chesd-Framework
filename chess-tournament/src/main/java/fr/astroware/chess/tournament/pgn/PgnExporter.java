@@ -41,6 +41,26 @@ public final class PgnExporter {
         tag(pgn, "BlackAuthor", result.black().authorName());
         tag(pgn, "Result", result.pgnResult());
         tag(pgn, "PlyCount", Integer.toString(result.pliesPlayed()));
+        tag(
+            pgn,
+            "Termination",
+            result.termination().name().toLowerCase(
+                java.util.Locale.ROOT
+            )
+        );
+
+        result.incident().ifPresent(incident -> {
+            tag(
+                pgn,
+                "ForfeitBy",
+                incident.offender().botName()
+            );
+            tag(
+                pgn,
+                "ForfeitReason",
+                incident.type().name()
+            );
+        });
 
         String standardFen = ChessRulesEngines.standard()
             .initialPosition()
