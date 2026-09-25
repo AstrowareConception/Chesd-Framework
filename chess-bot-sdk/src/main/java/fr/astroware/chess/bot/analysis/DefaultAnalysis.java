@@ -1,14 +1,20 @@
 package fr.astroware.chess.bot.analysis;
 
 import fr.astroware.chess.bot.api.BotContext;
+import fr.astroware.chess.core.game.GameResult;
 import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
 import fr.astroware.chess.core.model.Piece;
 import fr.astroware.chess.core.model.PlacedPiece;
+import fr.astroware.chess.core.model.PositionView;
 import fr.astroware.chess.core.model.Square;
+import fr.astroware.chess.core.rules.ChessRulesEngine;
+import fr.astroware.chess.core.rules.ChessRulesEngines;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.random.RandomGenerator;
 
 /**
  * Analyse positionnelle de base.
@@ -103,5 +109,64 @@ final class DefaultAnalysis implements Analysis {
     @Override
     public PieceValues pieceValues() {
         return pieceValues;
+    }
+
+    @Override
+    public PositionProjection after(Move move) {
+        Objects.requireNonNull(move, "move must not be null");
+
+        String fen = context.position().fen();
+
+        if (fen == null || fen.isBlank()) {
+            throw new IllegalStateException(
+                "Position projection requires a complete FEN representation"
+            );
+        }
+
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        PositionView source = engine.fromFen(fen);
+        PositionView projected = engine.play(source, move);
+        List<Move> legalMoves = engine.legalMoves(projected);
+        GameResult result = engine.result(projected);
+
+        List<Move> history = new ArrayList<>(context.moveHistory());
+        history.add(move);
+
+        BotContext projectedContext = new ProjectedContext(
+            projected.sideToMove(),
+            projected,
+            legalMoves,
+            List.copyOf(history),
+            context.random()
+        );
+
+        Analysis projectedAnalysis = Analysis.of(projectedContext);
+
+        return new PositionProjection(
+            projected,
+            projectedAnalysis,
+            legalMoves,
+            result
+        );
+    }
+
+    /**
+     * Contexte minimal associé à une position projetée.
+     *
+     * <p>Le camp de ce contexte est le camp désormais au trait, ce qui garde
+     * cohérentes les méthodes dépendant des coups légaux, comme captures().</p>
+     */
+    private record ProjectedContext(
+        Color myColor,
+        PositionView position,
+        List<Move> legalMoves,
+        List<Move> moveHistory,
+        RandomGenerator random
+    ) implements BotContext {
+
+        private ProjectedContext {
+            legalMoves = List.copyOf(legalMoves);
+            moveHistory = List.copyOf(moveHistory);
+        }
     }
 }
