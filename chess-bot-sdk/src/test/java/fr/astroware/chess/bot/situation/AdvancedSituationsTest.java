@@ -3,6 +3,8 @@ package fr.astroware.chess.bot.situation;
 import fr.astroware.chess.bot.api.BotContext;
 import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.situation.detection.CheckingMoveDetection;
+import fr.astroware.chess.bot.situation.detection.DiscoveredAttackDetection;
+import fr.astroware.chess.bot.situation.detection.DoubleCheckDetection;
 import fr.astroware.chess.bot.situation.detection.PinDetection;
 import fr.astroware.chess.bot.situation.detection.SkewerDetection;
 import fr.astroware.chess.core.model.Color;
@@ -88,6 +90,53 @@ class AdvancedSituationsTest {
             detections.stream()
                 .anyMatch(detection ->
                     detection.move().equals(Move.fromUci("a1e1"))
+                )
+        );
+    }
+
+
+    @Test
+    void detectsDoubleCheck() {
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        PositionView position = engine.fromFen(
+            "4k3/8/8/8/8/8/4B3/4R2K w - - 0 1"
+        );
+
+        List<DoubleCheckDetection> detections =
+            Situations.doubleCheckOpportunity()
+                .detect(context(engine, position, Color.WHITE));
+
+        assertTrue(
+            detections.stream()
+                .anyMatch(detection ->
+                    detection.move().equals(Move.fromUci("e2b5"))
+                )
+        );
+    }
+
+    @Test
+    void detectsDiscoveredAttack() {
+        ChessRulesEngine engine = ChessRulesEngines.standard();
+        PositionView position = engine.fromFen(
+            "4q2k/8/8/8/8/8/4B3/4R2K w - - 0 1"
+        );
+
+        List<DiscoveredAttackDetection> detections =
+            Situations.discoveredAttackOpportunity()
+                .detect(context(engine, position, Color.WHITE));
+
+        assertTrue(
+            detections.stream()
+                .anyMatch(detection ->
+                    detection.move().equals(Move.fromUci("e2d3"))
+                        && detection.revealedAttacker()
+                            .square()
+                            .notation()
+                            .equals("e1")
+                        && detection.target()
+                            .square()
+                            .notation()
+                            .equals("e8")
                 )
         );
     }
