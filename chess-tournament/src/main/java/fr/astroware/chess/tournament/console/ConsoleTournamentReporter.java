@@ -46,13 +46,14 @@ public final class ConsoleTournamentReporter {
         );
 
         out.printf(
-            "%-4s %-22s %5s %4s %4s %4s %5s %7s %10s%n",
+            "%-4s %-22s %5s %4s %4s %4s %4s %5s %7s %10s%n",
             "#",
             "Bot",
             "Pts",
             "V",
             "N",
             "D",
+            "F",
             "NT",
             "Parties",
             "Moy. ms"
@@ -68,13 +69,14 @@ public final class ConsoleTournamentReporter {
             : result.standings()) {
 
             out.printf(
-                "%-4d %-22s %5.1f %4d %4d %4d %5d %7d %10.1f%n",
+                "%-4d %-22s %5.1f %4d %4d %4d %4d %5d %7d %10.1f%n",
                 rank++,
                 standing.bot().botName(),
                 standing.points(),
                 standing.wins(),
                 standing.draws(),
                 standing.losses(),
+                standing.forfeits(),
                 standing.technicalDraws(),
                 standing.played(),
                 standing.averageDecisionMillis()
@@ -83,7 +85,7 @@ public final class ConsoleTournamentReporter {
 
         out.println();
         out.println(
-            "NT = nulles techniques (limite de demi-coups atteinte)"
+            "F = défaites par forfait ; NT = nulles techniques"
         );
         out.println(
             "Barème : victoire 1 pt, nulle 0,5 pt, défaite 0 pt"
