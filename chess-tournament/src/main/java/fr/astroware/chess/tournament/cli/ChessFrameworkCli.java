@@ -1,17 +1,24 @@
 package fr.astroware.chess.tournament.cli;
 
+import fr.astroware.chess.bot.api.BotMetadata;
+import fr.astroware.chess.bot.api.ChessBot;
 import fr.astroware.chess.tournament.console.ConsoleMatchListener;
 import fr.astroware.chess.tournament.console.ConsoleTournamentReporter;
+import fr.astroware.chess.tournament.execution.BotPlayer;
+import fr.astroware.chess.tournament.execution.BotPlayerFactory;
+import fr.astroware.chess.tournament.execution.BotPlayers;
+import fr.astroware.chess.tournament.execution.IsolatedBotPlayerFactory;
+import fr.astroware.chess.tournament.execution.IsolatedBotSettings;
 import fr.astroware.chess.tournament.match.BotFactory;
 import fr.astroware.chess.tournament.match.MatchConfiguration;
 import fr.astroware.chess.tournament.match.MatchResult;
 import fr.astroware.chess.tournament.match.MatchRunner;
 import fr.astroware.chess.tournament.pgn.PgnExporter;
 import fr.astroware.chess.tournament.roundrobin.RoundRobinConfiguration;
-import fr.astroware.chess.tournament.roundrobin.RoundRobinResult;
 import fr.astroware.chess.tournament.roundrobin.RoundRobinPgnExporter;
-import fr.astroware.chess.tournament.roundrobin.StandingsCsvExporter;
+import fr.astroware.chess.tournament.roundrobin.RoundRobinResult;
 import fr.astroware.chess.tournament.roundrobin.RoundRobinTournament;
+import fr.astroware.chess.tournament.roundrobin.StandingsCsvExporter;
 import fr.astroware.chess.tournament.roundrobin.TournamentParticipant;
 import fr.astroware.chess.tournament.ui.SwingMatchViewer;
 
@@ -19,32 +26,30 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
 /**
- * Point d'entrée simple pour lancer un duel entre bots.
- *
- * <p>Exemples :</p>
- *
- * <pre>
- * console tactical random
- * pgn tactical guardian partie.pgn
- * gui architect berserker
- * list
- * </pre>
+ * CLI du framework de tournoi.
  */
 public final class ChessFrameworkCli {
 
     private static final long DEFAULT_SEED = 42L;
+    private static final int DEFAULT_MAX_PLIES = 400;
+    private static final int DEFAULT_GAMES_PER_PAIR = 2;
+    private static final int DEFAULT_TIMEOUT_MS = 2_000;
+    private static final int DEFAULT_STARTUP_TIMEOUT_MS = 5_000;
+    private static final int DEFAULT_HEAP_MB = 256;
 
     private ChessFrameworkCli() {
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length == 0 || "help".equalsIgnoreCase(args[0])) {
+        if (args.length == 0
+            || "help".equalsIgnoreCase(args[0])) {
             printUsage();
             return;
         }
@@ -54,7 +59,8 @@ public final class ChessFrameworkCli {
             return;
         }
 
-        String mode = args[0].toLowerCase(Locale.ROOT);
+        String mode =
+            args[0].toLowerCase(Locale.ROOT);
 
         if ("tournament".equals(mode)) {
             runTournament(args);
@@ -66,17 +72,43 @@ public final class ChessFrameworkCli {
             return;
         }
 
-        BotFactory white = requireBot(args[1]);
-        BotFactory black = requireBot(args[2]);
+        runDuel(mode, args);
+    }
 
-        long seed = readSeed(args);
-        int maxPlies = readMaxPlies(args);
+    private static void runDuel(
+        String mode,
+        String[] args
+    ) throws IOException {
+        boolean isolated =
+            hasFlag(args, "--isolated");
 
-        MatchConfiguration configuration = new MatchConfiguration(
-            maxPlies,
-            seed,
-            java.util.Optional.empty()
-        );
+        IsolatedBotSettings settings =
+            readIsolationSettings(args);
+
+        BotPlayerFactory<? extends BotPlayer> white =
+            playerFactory(
+                args[1],
+                isolated,
+                settings
+            );
+
+        BotPlayerFactory<? extends BotPlayer> black =
+            playerFactory(
+                args[2],
+                isolated,
+                settings
+            );
+
+        MatchConfiguration configuration =
+            new MatchConfiguration(
+                readMaxPlies(args),
+                readSeed(args),
+                java.util.Optional.empty()
+            );
+
+        if (isolated) {
+            printIsolationSettings(settings);
+        }
 
         MatchRunner runner = new MatchRunner();
 
@@ -90,22 +122,28 @@ public final class ChessFrameworkCli {
 
             case "pgn" -> {
                 MatchResult result =
-                    runner.play(white, black, configuration);
+                    runner.play(
+                        white,
+                        black,
+                        configuration
+                    );
 
-                String pgn = new PgnExporter().export(result);
+                String pgn =
+                    new PgnExporter().export(result);
 
-                if (args.length >= 4
-                    && !args[3].startsWith("--")) {
-                    Path path = Path.of(args[3]);
+                Path output =
+                    readPgnOutput(args);
+
+                if (output != null) {
                     Files.writeString(
-                        path,
+                        output,
                         pgn,
                         StandardCharsets.UTF_8
                     );
 
                     System.out.println(
                         "PGN écrit dans : "
-                            + path.toAbsolutePath()
+                            + output.toAbsolutePath()
                     );
                 } else {
                     System.out.println(pgn);
@@ -116,52 +154,47 @@ public final class ChessFrameworkCli {
 
             case "gui" -> {
                 MatchResult result =
-                    runner.play(white, black, configuration);
+                    runner.play(
+                        white,
+                        black,
+                        configuration
+                    );
 
                 printSummary(result);
                 SwingMatchViewer.show(result);
             }
 
             default -> {
-                System.err.println("Mode inconnu : " + mode);
+                System.err.println(
+                    "Mode inconnu : " + mode
+                );
                 printUsage();
             }
         }
     }
 
-    private static void runTournament(String[] args) {
-        long seed = readSeed(args);
-        int maxPlies = readMaxPlies(args);
-        int gamesPerPair = readGamesPerPair(args);
+    private static void runTournament(
+        String[] args
+    ) {
+        boolean isolated =
+            hasFlag(args, "--isolated");
 
-        List<String> requestedBots = new ArrayList<>();
+        IsolatedBotSettings isolationSettings =
+            readIsolationSettings(args);
 
-        for (int index = 1; index < args.length; index++) {
-            String arg = args[index];
+        List<String> requestedBots =
+            tournamentBotNames(args);
 
-            if (arg.startsWith("--")) {
-                continue;
-            }
+        boolean all =
+            hasFlag(args, "--all");
 
-            requestedBots.add(arg);
-        }
-
-        boolean all = java.util.Arrays.stream(args)
-            .anyMatch("--all"::equalsIgnoreCase);
-
-        List<TournamentParticipant> participants;
+        List<String> botNames;
 
         if (all) {
-            participants = BotCatalog.all()
-                .entrySet()
-                .stream()
-                .map(entry ->
-                    new TournamentParticipant(
-                        entry.getKey(),
-                        entry.getValue()
-                    )
-                )
-                .toList();
+            botNames = new ArrayList<>(
+                BotCatalog.all().keySet()
+            );
+            botNames.sort(String::compareTo);
         } else {
             if (requestedBots.size() < 2) {
                 throw new IllegalArgumentException(
@@ -170,29 +203,95 @@ public final class ChessFrameworkCli {
                 );
             }
 
-            participants = requestedBots.stream()
+            botNames = List.copyOf(
+                requestedBots
+            );
+        }
+
+        List<TournamentParticipant> participants =
+            botNames.stream()
                 .map(name ->
-                    new TournamentParticipant(
-                        name.toLowerCase(Locale.ROOT),
-                        requireBot(name)
+                    tournamentParticipant(
+                        name,
+                        isolated,
+                        isolationSettings
                     )
                 )
                 .toList();
+
+        if (isolated) {
+            printIsolationSettings(
+                isolationSettings
+            );
         }
 
         RoundRobinResult result =
             new RoundRobinTournament().play(
                 participants,
                 new RoundRobinConfiguration(
-                    gamesPerPair,
-                    maxPlies,
-                    seed
+                    readGamesPerPair(args),
+                    readMaxPlies(args),
+                    readSeed(args)
                 )
             );
 
-        new ConsoleTournamentReporter().print(result);
+        new ConsoleTournamentReporter()
+            .print(result);
 
-        writeTournamentExports(args, result);
+        writeTournamentExports(
+            args,
+            result
+        );
+    }
+
+    private static TournamentParticipant
+        tournamentParticipant(
+            String name,
+            boolean isolated,
+            IsolatedBotSettings settings
+        ) {
+
+        String key =
+            name.toLowerCase(Locale.ROOT);
+
+        BotFactory factory =
+            requireBot(name);
+
+        BotMetadata metadata =
+            factory.create().metadata();
+
+        if (!isolated) {
+            return new TournamentParticipant(
+                key,
+                factory
+            );
+        }
+
+        return TournamentParticipant.isolated(
+            key,
+            requireBotClass(name),
+            metadata,
+            settings
+        );
+    }
+
+    private static BotPlayerFactory<? extends BotPlayer>
+        playerFactory(
+            String name,
+            boolean isolated,
+            IsolatedBotSettings settings
+        ) {
+
+        if (isolated) {
+            return new IsolatedBotPlayerFactory(
+                requireBotClass(name),
+                settings
+            );
+        }
+
+        return BotPlayers.inProcess(
+            requireBot(name)
+        );
     }
 
     private static void writeTournamentExports(
@@ -202,13 +301,16 @@ public final class ChessFrameworkCli {
         for (String arg : args) {
             if (arg.startsWith("--pgn=")) {
                 Path path = Path.of(
-                    arg.substring("--pgn=".length())
+                    arg.substring(
+                        "--pgn=".length()
+                    )
                 );
 
                 try {
                     Files.writeString(
                         path,
-                        new RoundRobinPgnExporter().export(result),
+                        new RoundRobinPgnExporter()
+                            .export(result),
                         StandardCharsets.UTF_8
                     );
                 } catch (IOException exception) {
@@ -227,13 +329,16 @@ public final class ChessFrameworkCli {
 
             if (arg.startsWith("--csv=")) {
                 Path path = Path.of(
-                    arg.substring("--csv=".length())
+                    arg.substring(
+                        "--csv=".length()
+                    )
                 );
 
                 try {
                     Files.writeString(
                         path,
-                        new StandingsCsvExporter().export(result),
+                        new StandingsCsvExporter()
+                            .export(result),
                         StandardCharsets.UTF_8
                     );
                 } catch (IOException exception) {
@@ -252,22 +357,102 @@ public final class ChessFrameworkCli {
         }
     }
 
-    private static BotFactory requireBot(String name) {
+    private static BotFactory requireBot(
+        String name
+    ) {
         return BotCatalog.find(name)
             .orElseThrow(() ->
-                new IllegalArgumentException(
-                    "Bot inconnu : "
-                        + name
-                        + ". Utilisez 'list' pour voir les bots."
-                )
+                unknownBot(name)
             );
     }
 
-    private static long readSeed(String[] args) {
+    private static Class<? extends ChessBot>
+        requireBotClass(String name) {
+
+        return BotCatalog.findClass(name)
+            .orElseThrow(() ->
+                unknownBot(name)
+            );
+    }
+
+    private static IllegalArgumentException
+        unknownBot(String name) {
+
+        return new IllegalArgumentException(
+            "Bot inconnu : "
+                + name
+                + ". Utilisez 'list' pour voir les bots."
+        );
+    }
+
+    private static List<String> tournamentBotNames(
+        String[] args
+    ) {
+        List<String> names =
+            new ArrayList<>();
+
+        for (int index = 1;
+            index < args.length;
+            index++) {
+
+            String arg = args[index];
+
+            if (!arg.startsWith("--")) {
+                names.add(arg);
+            }
+        }
+
+        return names;
+    }
+
+    private static boolean hasFlag(
+        String[] args,
+        String flag
+    ) {
+        return java.util.Arrays.stream(args)
+            .anyMatch(
+                value ->
+                    flag.equalsIgnoreCase(value)
+            );
+    }
+
+    private static IsolatedBotSettings
+        readIsolationSettings(
+            String[] args
+        ) {
+
+        return new IsolatedBotSettings(
+            Duration.ofMillis(
+                readPositiveIntOption(
+                    args,
+                    "--startup-timeout-ms=",
+                    DEFAULT_STARTUP_TIMEOUT_MS
+                )
+            ),
+            Duration.ofMillis(
+                readPositiveIntOption(
+                    args,
+                    "--timeout-ms=",
+                    DEFAULT_TIMEOUT_MS
+                )
+            ),
+            readPositiveIntOption(
+                args,
+                "--heap-mb=",
+                DEFAULT_HEAP_MB
+            )
+        );
+    }
+
+    private static long readSeed(
+        String[] args
+    ) {
         for (String arg : args) {
             if (arg.startsWith("--seed=")) {
                 return Long.parseLong(
-                    arg.substring("--seed=".length())
+                    arg.substring(
+                        "--seed=".length()
+                    )
                 );
             }
         }
@@ -275,38 +460,96 @@ public final class ChessFrameworkCli {
         return DEFAULT_SEED;
     }
 
-    private static int readGamesPerPair(String[] args) {
+    private static int readGamesPerPair(
+        String[] args
+    ) {
+        return readPositiveIntOption(
+            args,
+            "--games=",
+            DEFAULT_GAMES_PER_PAIR
+        );
+    }
+
+    private static int readMaxPlies(
+        String[] args
+    ) {
+        return readPositiveIntOption(
+            args,
+            "--max-plies=",
+            DEFAULT_MAX_PLIES
+        );
+    }
+
+    private static int readPositiveIntOption(
+        String[] args,
+        String prefix,
+        int defaultValue
+    ) {
         for (String arg : args) {
-            if (arg.startsWith("--games=")) {
-                return Integer.parseInt(
-                    arg.substring("--games=".length())
+            if (arg.startsWith(prefix)) {
+                int value = Integer.parseInt(
+                    arg.substring(
+                        prefix.length()
+                    )
                 );
+
+                if (value <= 0) {
+                    throw new IllegalArgumentException(
+                        prefix
+                            + " doit être strictement positif"
+                    );
+                }
+
+                return value;
             }
         }
 
-        return 2;
+        return defaultValue;
     }
 
-    private static int readMaxPlies(String[] args) {
-        for (String arg : args) {
-            if (arg.startsWith("--max-plies=")) {
-                return Integer.parseInt(
-                    arg.substring("--max-plies=".length())
-                );
+    private static Path readPgnOutput(
+        String[] args
+    ) {
+        for (
+            int index = 3;
+            index < args.length;
+            index++
+        ) {
+            String arg = args[index];
+
+            if (!arg.startsWith("--")) {
+                return Path.of(arg);
             }
         }
 
-        return 400;
+        return null;
     }
 
-    private static void printSummary(MatchResult result) {
+    private static void printIsolationSettings(
+        IsolatedBotSettings settings
+    ) {
+        System.out.printf(
+            Locale.ROOT,
+            "Isolation JVM : timeout=%d ms, démarrage=%d ms, heap=%d MiB%n",
+            settings.decisionTimeoutMillis(),
+            settings.startupTimeoutMillis(),
+            settings.maxHeapMegabytes()
+        );
+    }
+
+    private static void printSummary(
+        MatchResult result
+    ) {
         System.out.println();
         System.out.println(
             result.white().botName()
                 + " vs "
                 + result.black().botName()
         );
-        System.out.println("Résultat : " + result.pgnResult());
+        System.out.println(
+            "Résultat : "
+                + result.pgnResult()
+        );
         System.out.println(
             "Coups : "
                 + result.fullMovesPlayed()
@@ -314,16 +557,33 @@ public final class ChessFrameworkCli {
                 + result.pliesPlayed()
                 + " demi-coups)"
         );
-        System.out.println("Fin : " + result.termination());
+        System.out.println(
+            "Fin : "
+                + result.termination()
+        );
+
+        result.incident().ifPresent(
+            incident ->
+                System.out.println(
+                    "Incident : "
+                        + incident.summary()
+                )
+        );
     }
 
     private static void printBots() {
-        System.out.println("Bots disponibles :");
+        System.out.println(
+            "Bots disponibles :"
+        );
 
-        for (Map.Entry<String, BotFactory> entry
-            : BotCatalog.all().entrySet()) {
-
-            var metadata = entry.getValue().create().metadata();
+        for (
+            Map.Entry<String, BotFactory> entry
+            : BotCatalog.all().entrySet()
+        ) {
+            var metadata =
+                entry.getValue()
+                    .create()
+                    .metadata();
 
             System.out.printf(
                 "  %-12s %-20s — %s%n",
@@ -341,20 +601,36 @@ public final class ChessFrameworkCli {
 
             Usage :
               list
-              console <blancs> <noirs> [--seed=N] [--max-plies=N]
-              pgn     <blancs> <noirs> [fichier.pgn] [--seed=N] [--max-plies=N]
-              gui     <blancs> <noirs> [--seed=N] [--max-plies=N]
-              tournament <bot1> <bot2> [...] [--games=N] [--seed=N] [--max-plies=N] [--pgn=file] [--csv=file]
-              tournament --all [--games=N] [--seed=N] [--max-plies=N] [--pgn=file] [--csv=file]
+              console <blancs> <noirs> [options]
+              pgn     <blancs> <noirs> [fichier.pgn] [options]
+              gui     <blancs> <noirs> [options]
+              tournament <bot1> <bot2> [...] [options]
+              tournament --all [options]
+
+            Options communes :
+              --seed=N
+              --max-plies=N
+
+            Isolation JVM :
+              --isolated
+              --timeout-ms=N
+              --startup-timeout-ms=N
+              --heap-mb=N
+
+            Options tournoi :
+              --games=N
+              --pgn=parties.pgn
+              --csv=classement.csv
 
             Exemples :
               console tactical random
-              console cautious berserker --seed=123
-              pgn tactical guardian partie.pgn
-              gui architect tactical
+              console minimax random --isolated
+              console minimax random --isolated --timeout-ms=3000 --heap-mb=256
+              pgn tactical guardian partie.pgn --isolated
+              gui architect tactical --isolated
               tournament random greedy tactical
-              tournament positional lookahead minimax --games=2
-              tournament --all --games=2
+              tournament positional lookahead minimax --games=2 --isolated
+              tournament --all --games=2 --isolated --timeout-ms=3000
               tournament tactical positional --pgn=parties.pgn --csv=classement.csv
 
             Utilisez :
