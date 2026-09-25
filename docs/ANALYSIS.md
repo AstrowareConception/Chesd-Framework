@@ -154,3 +154,52 @@ StrategyProfile
   ↓
 Move
 ```
+
+---
+
+## Phase de jeu
+
+`Analysis` fournit désormais :
+
+```java
+analysis.gamePhase();
+```
+
+Valeurs possibles :
+
+```java
+OPENING
+MIDDLEGAME
+ENDGAME
+```
+
+L'estimation standard tient compte :
+
+- du numéro de coup, à partir de l'historique ou du FEN ;
+- du matériel non-pion restant ;
+- de la présence ou non des dames.
+
+Cette classification est une heuristique pédagogique, pas une vérité absolue.
+
+Elle sert à permettre aux bots de changer :
+
+- de profil ;
+- de règles actives ;
+- de plans ;
+- de niveau de risque.
+
+---
+
+## Tactiques de ligne et surcharge
+
+`Analysis` expose aussi :
+
+```java
+analysis.pinsBy(Color.WHITE);
+analysis.skewersBy(Color.WHITE);
+analysis.overloadedDefenders(Color.BLACK);
+```
+
+Un défenseur est actuellement considéré surchargé lorsqu'il est **l'unique défenseur d'au moins deux pièces déjà attaquées**.
+
+Le framework peut ensuite simuler la capture de ce défenseur et vérifier quelles cibles deviennent réellement pendues.
