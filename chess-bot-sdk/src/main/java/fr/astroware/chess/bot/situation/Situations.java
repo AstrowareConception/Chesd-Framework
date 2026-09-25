@@ -172,7 +172,13 @@ public final class Situations {
      * possibilité à l'adversaire.</p>
      */
     public static Situation<MateRiskDetection> mateInOneRisk() {
-        return context -> context.legalMoves().stream()
+        return context -> {
+            if (context.position().fen() == null
+                || context.position().fen().isBlank()) {
+                return List.of();
+            }
+
+            return context.legalMoves().stream()
             .map(move -> {
                 PositionProjection projection =
                     context.analysis().after(move);
@@ -191,6 +197,7 @@ public final class Situations {
             })
             .flatMap(Optional::stream)
             .toList();
+        };
     }
 
     /**
@@ -198,6 +205,11 @@ public final class Situations {
      */
     public static Situation<MateInOneDetection> mateInOne() {
         return context -> {
+            if (context.position().fen() == null
+                || context.position().fen().isBlank()) {
+                return List.of();
+            }
+
             GameStatus winningStatus = context.myColor() == Color.WHITE
                 ? GameStatus.WHITE_WINS
                 : GameStatus.BLACK_WINS;
