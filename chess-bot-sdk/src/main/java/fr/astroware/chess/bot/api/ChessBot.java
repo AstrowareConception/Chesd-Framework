@@ -31,6 +31,19 @@ public abstract class ChessBot {
     }
 
     /**
+     * Profil stratégique effectif pour la position courante.
+     *
+     * <p>Par défaut, cette méthode délègue au profil historique sans contexte,
+     * ce qui maintient la compatibilité avec les bots existants. Un bot avancé
+     * peut la redéfinir pour adapter son tempérament à la phase de jeu ou à la
+     * position.</p>
+     */
+    protected StrategyProfile strategyProfile(BotContext context) {
+        Objects.requireNonNull(context, "context must not be null");
+        return strategyProfile();
+    }
+
+    /**
      * Exécute le cycle standard de décision.
      *
      * <p>Le contexte est enveloppé pour partager une même instance
@@ -55,7 +68,7 @@ public abstract class ChessBot {
         }
 
         StrategyProfile profile = Objects.requireNonNull(
-            strategyProfile(),
+            strategyProfile(decisionContext),
             "strategyProfile must not return null"
         );
 
