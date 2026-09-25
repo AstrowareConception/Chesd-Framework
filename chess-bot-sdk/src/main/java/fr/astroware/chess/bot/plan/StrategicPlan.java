@@ -29,9 +29,25 @@ public interface StrategicPlan {
      * Transforme le plan en règle directement insérable dans la liste du bot.
      */
     default Rule<PresenceDetection> asRule() {
+        return asRule(Situations.always());
+    }
+
+    /**
+     * Transforme le plan en règle conditionnelle.
+     *
+     * <p>Exemple : activer un plan uniquement en finale.</p>
+     */
+    default Rule<PresenceDetection> asRule(
+        fr.astroware.chess.bot.rule.Situation<PresenceDetection> activation
+    ) {
+        java.util.Objects.requireNonNull(
+            activation,
+            "activation must not be null"
+        );
+
         return Rule.of(
             "Plan : " + name(),
-            Situations.always(),
+            activation,
             (context, detections) -> {
                 if (progress(context).state() == PlanState.COMPLETED) {
                     return List.of();
