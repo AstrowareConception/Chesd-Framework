@@ -158,6 +158,8 @@ Implémenter :
 - [x] phase de jeu
 - [x] règles conditionnées par phase
 - [x] profil stratégique dépendant du contexte
+- [x] recherche adversariale profondeur 2
+- [x] pré-sélection configurable des candidats
 - [x] sécurité simple d'une pièce
 - [x] détection de pièce pendue
 
@@ -230,6 +232,7 @@ Puis :
 - [x] `PressureBot`
 - [x] `ChameleonBot`
 - [x] `PositionalBot`
+- [x] `LookaheadBot`
 - [x] `SolidPlannerBot` comme exemple pédagogique supplémentaire
 
 ---
