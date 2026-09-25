@@ -211,7 +211,7 @@ Puis :
 ## Phase 6 — Catalogue d'actions
 
 - [x] coup légal aléatoire
-- [ ] jouer le coup détecté
+- [x] jouer le coup détecté
 - [x] meilleure capture matérielle
 - [x] sortie d'échec
 - [x] mat en un
@@ -237,6 +237,7 @@ Puis :
 - [x] `ChameleonBot`
 - [x] `PositionalBot`
 - [x] `LookaheadBot`
+- [x] `MinimaxBot`
 - [x] `SolidPlannerBot` comme exemple pédagogique supplémentaire
 
 ---
@@ -292,13 +293,13 @@ Puis :
 
 ## Extensions possibles
 
-- interface graphique
-- replay pas à pas
+- [x] interface graphique Swing
+- [x] replay pas à pas
 - visualisation web
 - tableau de tournoi en direct
 - Elo interne
-- Minimax
-- alpha-beta
+- [x] Minimax
+- [x] alpha-beta
 - compatibilité UCI
 - bots externes via protocole
 - tournoi inter-langages
