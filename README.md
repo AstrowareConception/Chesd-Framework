@@ -136,6 +136,7 @@ Déjà disponibles :
 - structures de pions : isolés, doublés, passés et passés protégés ;
 - colonnes ouvertes et semi-ouvertes ;
 - évitement des mats en un adverses ;
+- recherche adversariale profondeur 2 : meilleur coup → meilleure réponse adverse → score robuste ;
 - situations `captureAvailable()` et `hangingEnemyPiece()` ;
 - actions de capture matérialiste et prudente ;
 - notation UCI simple des coups ;
@@ -156,6 +157,7 @@ Déjà disponibles :
 - `PressureBot` ;
 - `ChameleonBot` ;
 - `PositionalBot` ;
+- `LookaheadBot` ;
 - `SolidPlannerBot` comme exemple pédagogique ;
 - `MatchRunner` pour faire jouer réellement deux bots avec une seed reproductible ;
 - tests unitaires et CI GitHub Actions.
