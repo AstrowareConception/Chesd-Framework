@@ -114,6 +114,13 @@ public final class ConsoleMatchListener implements MatchListener {
         out.printf("Demi-coups : %d%n", result.pliesPlayed());
         out.printf("Coups       : %d%n", result.fullMovesPlayed());
         out.printf("Terminaison : %s%n", result.termination());
+
+        result.incident().ifPresent(incident ->
+            out.printf(
+                "Incident    : %s%n",
+                incident.summary()
+            )
+        );
         out.printf(
             "Temps moyen Blancs : %.1f ms (max %.1f ms)%n",
             result.averageDecisionMillis(Color.WHITE),
