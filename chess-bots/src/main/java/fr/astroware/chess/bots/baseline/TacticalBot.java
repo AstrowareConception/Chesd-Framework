@@ -68,6 +68,11 @@ public final class TacticalBot extends ChessBot {
                 Actions.playBestFork()
             ),
             rule(
+                "Éliminer un défenseur surchargé",
+                Situations.removeOverloadedDefenderOpportunity(),
+                Actions.removeOverloadedDefender()
+            ),
+            rule(
                 "Créer un clouage",
                 Situations.pinOpportunity(),
                 Actions.playBestPin()
