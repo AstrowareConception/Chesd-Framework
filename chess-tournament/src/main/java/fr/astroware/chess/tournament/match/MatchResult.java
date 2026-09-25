@@ -3,6 +3,7 @@ package fr.astroware.chess.tournament.match;
 import fr.astroware.chess.bot.api.BotMetadata;
 import fr.astroware.chess.core.game.GameResult;
 import fr.astroware.chess.core.game.GameStatus;
+import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
 
 import java.util.List;
@@ -78,6 +79,38 @@ public record MatchResult(
             case DRAW -> "1/2-1/2";
             case ONGOING -> "*";
         };
+    }
+
+    /**
+     * Temps total de décision d'un camp en millisecondes.
+     */
+    public double totalDecisionMillis(Color color) {
+        return playedMoves.stream()
+            .filter(move -> move.color() == color)
+            .mapToDouble(PlayedMove::decisionMillis)
+            .sum();
+    }
+
+    /**
+     * Temps moyen par demi-coup pour un camp.
+     */
+    public double averageDecisionMillis(Color color) {
+        return playedMoves.stream()
+            .filter(move -> move.color() == color)
+            .mapToDouble(PlayedMove::decisionMillis)
+            .average()
+            .orElse(0.0);
+    }
+
+    /**
+     * Plus long temps de décision d'un camp.
+     */
+    public double maxDecisionMillis(Color color) {
+        return playedMoves.stream()
+            .filter(move -> move.color() == color)
+            .mapToDouble(PlayedMove::decisionMillis)
+            .max()
+            .orElse(0.0);
     }
 
     public boolean isFinishedNaturally() {
