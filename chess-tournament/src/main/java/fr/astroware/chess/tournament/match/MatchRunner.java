@@ -3,13 +3,17 @@ package fr.astroware.chess.tournament.match;
 import fr.astroware.chess.bot.api.BotContext;
 import fr.astroware.chess.bot.api.BotDecision;
 import fr.astroware.chess.bot.api.BotMetadata;
-import fr.astroware.chess.bot.api.ChessBot;
 import fr.astroware.chess.core.game.GameResult;
 import fr.astroware.chess.core.model.Color;
 import fr.astroware.chess.core.model.Move;
 import fr.astroware.chess.core.model.PositionView;
 import fr.astroware.chess.core.rules.ChessRulesEngine;
 import fr.astroware.chess.core.rules.ChessRulesEngines;
+import fr.astroware.chess.tournament.execution.BotExecutionException;
+import fr.astroware.chess.tournament.execution.BotExecutionFailure;
+import fr.astroware.chess.tournament.execution.BotPlayer;
+import fr.astroware.chess.tournament.execution.BotPlayerFactory;
+import fr.astroware.chess.tournament.execution.BotPlayers;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -18,13 +22,19 @@ import java.util.Random;
 import java.util.random.RandomGenerator;
 
 /**
- * Exécute une partie complète entre deux ChessBot.
+ * Exécute une partie complète entre deux joueurs de bot.
  *
- * <p>Une exception non gérée provenant d'un bot provoque désormais un
- * forfait propre : l'adversaire gagne, l'incident est enregistré et le
- * tournoi peut continuer.</p>
+ * <p>Les appels historiques avec {@link BotFactory} utilisent une exécution
+ * dans la JVM courante. Une autre {@link BotPlayerFactory} peut fournir un
+ * processus isolé sans modifier le moteur de partie.</p>
  */
 public final class MatchRunner {
+
+    private static final long WHITE_SEED_SALT =
+        0x51A7E123L;
+
+    private static final long BLACK_SEED_SALT =
+        0xB1AC2026L;
 
     private final ChessRulesEngine engine;
 
@@ -33,7 +43,10 @@ public final class MatchRunner {
     }
 
     public MatchRunner(ChessRulesEngine engine) {
-        this.engine = engine;
+        this.engine = java.util.Objects.requireNonNull(
+            engine,
+            "engine must not be null"
+        );
     }
 
     public MatchResult play(
@@ -42,8 +55,8 @@ public final class MatchRunner {
         MatchConfiguration configuration
     ) {
         return play(
-            whiteFactory,
-            blackFactory,
+            BotPlayers.inProcess(whiteFactory),
+            BotPlayers.inProcess(blackFactory),
             configuration,
             MatchListeners.none()
         );
@@ -55,11 +68,96 @@ public final class MatchRunner {
         MatchConfiguration configuration,
         MatchListener listener
     ) {
-        ChessBot white = whiteFactory.create();
-        ChessBot black = blackFactory.create();
+        return play(
+            BotPlayers.inProcess(whiteFactory),
+            BotPlayers.inProcess(blackFactory),
+            configuration,
+            listener
+        );
+    }
 
-        BotMetadata whiteMetadata = white.metadata();
-        BotMetadata blackMetadata = black.metadata();
+    /**
+     * Exécute une partie avec des stratégies d'exécution configurables.
+     */
+    public MatchResult play(
+        BotPlayerFactory<? extends BotPlayer> whiteFactory,
+        BotPlayerFactory<? extends BotPlayer> blackFactory,
+        MatchConfiguration configuration
+    ) {
+        return play(
+            whiteFactory,
+            blackFactory,
+            configuration,
+            MatchListeners.none()
+        );
+    }
+
+    /**
+     * Exécute une partie avec des joueurs pouvant être locaux ou isolés.
+     */
+    public MatchResult play(
+        BotPlayerFactory<? extends BotPlayer> whiteFactory,
+        BotPlayerFactory<? extends BotPlayer> blackFactory,
+        MatchConfiguration configuration,
+        MatchListener listener
+    ) {
+        java.util.Objects.requireNonNull(
+            whiteFactory,
+            "whiteFactory must not be null"
+        );
+        java.util.Objects.requireNonNull(
+            blackFactory,
+            "blackFactory must not be null"
+        );
+        java.util.Objects.requireNonNull(
+            configuration,
+            "configuration must not be null"
+        );
+        java.util.Objects.requireNonNull(
+            listener,
+            "listener must not be null"
+        );
+
+        long whiteSeed =
+            configuration.randomSeed() ^ WHITE_SEED_SALT;
+
+        long blackSeed =
+            configuration.randomSeed() ^ BLACK_SEED_SALT;
+
+        try (
+            BotPlayer white = whiteFactory.create(whiteSeed);
+            BotPlayer black = blackFactory.create(blackSeed)
+        ) {
+            return playOpenedPlayers(
+                white,
+                black,
+                configuration,
+                listener,
+                whiteSeed,
+                blackSeed
+            );
+        }
+    }
+
+    private MatchResult playOpenedPlayers(
+        BotPlayer white,
+        BotPlayer black,
+        MatchConfiguration configuration,
+        MatchListener listener,
+        long whiteSeed,
+        long blackSeed
+    ) {
+        BotMetadata whiteMetadata =
+            java.util.Objects.requireNonNull(
+                white.metadata(),
+                "white metadata must not be null"
+            );
+
+        BotMetadata blackMetadata =
+            java.util.Objects.requireNonNull(
+                black.metadata(),
+                "black metadata must not be null"
+            );
 
         PositionView position = configuration.initialFen()
             .map(engine::fromFen)
@@ -77,11 +175,16 @@ public final class MatchRunner {
         List<PlayedMove> playedMoves = new ArrayList<>();
 
         RandomGenerator whiteRandom =
-            new Random(configuration.randomSeed() ^ 0x51A7E123L);
-        RandomGenerator blackRandom =
-            new Random(configuration.randomSeed() ^ 0xB1AC2026L);
+            new Random(whiteSeed);
 
-        for (int ply = 1; ply <= configuration.maxPlies(); ply++) {
+        RandomGenerator blackRandom =
+            new Random(blackSeed);
+
+        for (
+            int ply = 1;
+            ply <= configuration.maxPlies();
+            ply++
+        ) {
             GameResult before = engine.result(position);
 
             if (before.isOver()) {
@@ -97,8 +200,11 @@ public final class MatchRunner {
             }
 
             Color color = position.sideToMove();
-            ChessBot bot = color == Color.WHITE ? white : black;
-            BotMetadata botMetadata =
+
+            BotPlayer player =
+                color == Color.WHITE ? white : black;
+
+            BotMetadata playerMetadata =
                 color == Color.WHITE
                     ? whiteMetadata
                     : blackMetadata;
@@ -123,14 +229,31 @@ public final class MatchRunner {
             BotDecision decision;
 
             try {
-                decision = bot.decide(context);
+                decision = player.decide(context);
+            } catch (BotExecutionException exception) {
+                return finishForfeit(
+                    whiteMetadata,
+                    blackMetadata,
+                    color,
+                    playerMetadata,
+                    mapExecutionFailure(exception.failure()),
+                    exception.remoteExceptionClass(),
+                    safeMessage(exception),
+                    ply,
+                    playedMoves,
+                    initialFen,
+                    position,
+                    listener
+                );
             } catch (RuntimeException exception) {
                 return finishForfeit(
                     whiteMetadata,
                     blackMetadata,
                     color,
-                    botMetadata,
-                    exception,
+                    playerMetadata,
+                    MatchIncidentType.BOT_EXCEPTION,
+                    exception.getClass().getName(),
+                    safeMessage(exception),
                     ply,
                     playedMoves,
                     initialFen,
@@ -141,6 +264,31 @@ public final class MatchRunner {
 
             long decisionNanos =
                 System.nanoTime() - decisionStartedAt;
+
+            if (decision == null
+                || decision.move() == null
+                || !legalMoves.contains(decision.move())) {
+
+                String move = decision == null
+                    || decision.move() == null
+                    ? "<null>"
+                    : decision.move().toUci();
+
+                return finishForfeit(
+                    whiteMetadata,
+                    blackMetadata,
+                    color,
+                    playerMetadata,
+                    MatchIncidentType.BOT_ILLEGAL_MOVE,
+                    "",
+                    "Coup illégal ou absent proposé : " + move,
+                    ply,
+                    playedMoves,
+                    initialFen,
+                    position,
+                    listener
+                );
+            }
 
             String beforeFen = position.fen();
             String san =
@@ -154,7 +302,7 @@ public final class MatchRunner {
             PlayedMove playedMove = new PlayedMove(
                 ply,
                 color,
-                botMetadata,
+                playerMetadata,
                 decision,
                 decisionNanos,
                 san,
@@ -226,7 +374,9 @@ public final class MatchRunner {
         BotMetadata black,
         Color offenderColor,
         BotMetadata offender,
-        RuntimeException exception,
+        MatchIncidentType incidentType,
+        String exceptionClass,
+        String message,
         int ply,
         List<PlayedMove> moves,
         String initialFen,
@@ -239,11 +389,11 @@ public final class MatchRunner {
                 : GameResult.whiteWins();
 
         MatchIncident incident = new MatchIncident(
-            MatchIncidentType.BOT_EXCEPTION,
+            incidentType,
             offenderColor,
             offender,
-            exception.getClass().getName(),
-            safeMessage(exception),
+            exceptionClass,
+            message,
             ply
         );
 
@@ -260,6 +410,21 @@ public final class MatchRunner {
 
         listener.onMatchEnded(result);
         return result;
+    }
+
+    private static MatchIncidentType mapExecutionFailure(
+        BotExecutionFailure failure
+    ) {
+        return switch (failure) {
+            case BOT_EXCEPTION ->
+                MatchIncidentType.BOT_EXCEPTION;
+            case TIMEOUT ->
+                MatchIncidentType.BOT_TIMEOUT;
+            case PROCESS_FAILURE ->
+                MatchIncidentType.BOT_PROCESS_FAILURE;
+            case PROTOCOL_ERROR ->
+                MatchIncidentType.BOT_PROTOCOL_ERROR;
+        };
     }
 
     private static String safeMessage(
