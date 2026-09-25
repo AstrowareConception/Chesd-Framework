@@ -120,6 +120,7 @@ Il obtient alors un bot au comportement différent sans réécrire le moteur.
 - [Évaluation des positions et des coups](docs/EVALUATION.md)
 - [Analyse de position](docs/ANALYSIS.md)
 - [Bots de référence](docs/REFERENCE_BOTS.md)
+- [Console, PGN et viewer graphique](docs/INTERFACES.md)
 - [Stratégies, postures et plans multi-coups](docs/STRATEGIES.md)
 - [Ouvertures et répertoires](docs/OPENINGS.md)
 - [Roadmap](docs/ROADMAP.md)
@@ -178,3 +179,39 @@ Le moteur devra enregistrer :
 - classement final.
 
 Les étudiants soumettront leur bot par Pull Request afin de pratiquer également le workflow GitHub.
+
+
+## Lancer un duel
+
+Après une première installation Maven :
+
+```bash
+mvn install
+cd chess-tournament
+```
+
+Lister les bots :
+
+```bash
+mvn exec:java -Dexec.args="list"
+```
+
+Suivre une partie en console :
+
+```bash
+mvn exec:java -Dexec.args="console tactical cautious"
+```
+
+Exporter un PGN :
+
+```bash
+mvn exec:java -Dexec.args="pgn tactical guardian partie.pgn"
+```
+
+Ouvrir le viewer graphique :
+
+```bash
+mvn exec:java -Dexec.args="gui architect tactical"
+```
+
+Voir `docs/INTERFACES.md` pour le détail.
