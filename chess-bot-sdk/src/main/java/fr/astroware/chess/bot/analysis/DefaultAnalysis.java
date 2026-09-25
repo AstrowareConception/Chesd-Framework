@@ -286,6 +286,22 @@ final class DefaultAnalysis implements Analysis {
     }
 
     @Override
+    public List<BatteryPattern> batteriesBy(Color color) {
+        return LineTacticAnalyzer.batteriesBy(
+            context.position(),
+            color
+        );
+    }
+
+    @Override
+    public List<XRayPattern> xRaysBy(Color color) {
+        return LineTacticAnalyzer.xRaysBy(
+            context.position(),
+            color
+        );
+    }
+
+    @Override
     public List<OverloadedDefenderPattern> overloadedDefenders(Color color) {
         Map<PlacedPiece, List<PlacedPiece>> protectedByDefender =
             new HashMap<>();
