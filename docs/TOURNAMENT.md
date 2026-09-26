@@ -8,10 +8,8 @@ Chaque paire joue le nombre demandé de parties et les couleurs alternent automa
 
 ## 1. Lancer un tournoi
 
-Depuis le module `chess-tournament` :
-
 ```bash
-mvn exec:java -Dexec.args="tournament random greedy tactical"
+bash scripts/chess.sh tournament random greedy tactical
 ```
 
 Par défaut :
@@ -26,7 +24,7 @@ Par défaut :
 ## 2. Choisir le nombre de parties
 
 ```bash
-mvn exec:java -Dexec.args="tournament positional lookahead minimax --games=4"
+bash scripts/chess.sh tournament positional lookahead minimax --games=4
 ```
 
 Avec 3 bots et 4 parties par paire :
@@ -49,7 +47,7 @@ Partie 4 : B blancs / A noirs
 ## 3. Lancer tous les bots
 
 ```bash
-mvn exec:java -Dexec.args="tournament --all"
+bash scripts/chess.sh tournament --all
 ```
 
 Attention : les bots utilisant une recherche plus profonde peuvent rendre ce tournoi sensiblement plus long.
@@ -67,7 +65,7 @@ Pour une démonstration rapide, il est souvent préférable de sélectionner que
 ## 4. Seed reproductible
 
 ```bash
-mvn exec:java -Dexec.args="tournament random greedy tactical --seed=12345"
+bash scripts/chess.sh tournament random greedy tactical --seed=12345
 ```
 
 Chaque partie dérive sa propre seed de la seed de base.
@@ -86,7 +84,7 @@ reste reproductible pour les décisions pseudo-aléatoires.
 ## 5. Limite de partie
 
 ```bash
-mvn exec:java -Dexec.args="tournament random random --max-plies=150"
+bash scripts/chess.sh tournament random random --max-plies=150
 ```
 
 Lorsqu'une partie atteint cette limite sans résultat échiquéen naturel, elle devient une **nulle technique** pour le classement.
@@ -163,11 +161,11 @@ result.maxDecisionMillis(Color.WHITE);
 
 Le tournoi calcule également le temps moyen de décision de chaque participant.
 
-Cette métrique sera utile pour :
+Cette métrique permet de :
 
 - comparer des approches algorithmiques ;
 - montrer le coût d'une profondeur supplémentaire ;
-- préparer les futures limites de temps du tournoi final.
+- contrôler le respect du budget de calcul du tournoi.
 
 ---
 
@@ -272,7 +270,7 @@ Cela permet de comparer directement :
 
 ## 12. Tournoi final étudiant
 
-Le workflow visé devient :
+Le workflow opérationnel est :
 
 ```text
 étudiant
@@ -298,7 +296,7 @@ classement final
 PGN / viewer / traces / statistiques
 ```
 
-Le moteur de tournoi est maintenant suffisamment structuré pour servir de base à ce processus.
+Ce workflow est testé automatiquement en CI avec un bot étudiant généré, validé, exécuté en duel isolé puis en mini-tournoi avec exports PGN/CSV.
 
 
 ---
@@ -308,19 +306,19 @@ Le moteur de tournoi est maintenant suffisamment structuré pour servir de base 
 Le mode tournoi peut écrire automatiquement toutes les parties dans un PGN multi-parties :
 
 ```bash
-mvn exec:java -Dexec.args="tournament tactical positional minimax --pgn=parties.pgn"
+bash scripts/chess.sh tournament tactical positional minimax --pgn=parties.pgn
 ```
 
 et le classement dans un CSV UTF-8 :
 
 ```bash
-mvn exec:java -Dexec.args="tournament tactical positional minimax --csv=classement.csv"
+bash scripts/chess.sh tournament tactical positional minimax --csv=classement.csv
 ```
 
 Les deux peuvent être combinés :
 
 ```bash
-mvn exec:java -Dexec.args="tournament tactical positional minimax --games=2 --pgn=parties.pgn --csv=classement.csv"
+bash scripts/chess.sh tournament tactical positional minimax --games=2 --pgn=parties.pgn --csv=classement.csv
 ```
 
 Le PGN contient toutes les parties à la suite.
@@ -414,13 +412,13 @@ Le framework protège désormais le tournoi contre une boucle infinie ou un bot 
 Activez l'isolation :
 
 ```bash
-mvn exec:java -Dexec.args="console minimax random --isolated"
+bash scripts/chess.sh console minimax random --isolated
 ```
 
 ou pour un tournoi complet :
 
 ```bash
-mvn exec:java -Dexec.args="tournament positional lookahead minimax --games=2 --isolated"
+bash scripts/chess.sh tournament positional lookahead minimax --games=2 --isolated
 ```
 
 Chaque bot d'une partie tourne alors dans une **JVM enfant persistante**, distincte de la JVM du tournoi. Une nouvelle JVM est créée à chaque nouvelle partie : un éventuel état interne ne fuit donc pas d'un match au suivant.
@@ -436,7 +434,7 @@ Les limites sont configurables :
 Exemple :
 
 ```bash
-mvn exec:java -Dexec.args="tournament tactical positional minimax --isolated --timeout-ms=3000 --heap-mb=256"
+bash scripts/chess.sh tournament tactical positional minimax --isolated --timeout-ms=3000 --heap-mb=256
 ```
 
 Si `ChessBot.decide(...)` dépasse le délai :
@@ -482,11 +480,8 @@ Le heap de la JVM enfant est borné via `-Xmx`.
 
 L'isolation de processus apporte un timeout dur et une limite mémoire JVM, mais ce n'est pas encore un sandbox système complet.
 
-Restent notamment à traiter avant un environnement hostile :
+Le workflow de Pull Request contrôle déjà le périmètre des fichiers, bloque l'ajout de dépendances via les POM et refuse les usages directs évidents du réseau, du disque, des processus et de la réflexion.
 
-- contrôle automatique des dépendances ajoutées ;
-- restrictions réseau sortant ;
-- restrictions d'accès disque ;
-- éventuellement conteneurisation du tournoi final.
+Pour un environnement réellement hostile, des restrictions système supplémentaires — conteneurisation ou sandbox OS — resteraient nécessaires.
 
 Pour un contexte pédagogique où les Pull Requests sont relues et passent la CI, le mécanisme actuel protège déjà le tournoi contre les erreurs, blocages et boucles infinies ordinaires.
