@@ -119,14 +119,16 @@ jobs:
         run: |
           $output = & ./scripts/chess.ps1 validate-students
           $output | Write-Host
-          if ($output -notmatch "Windows Smoke") { throw "Validation Windows absente." }
+          $text = $output -join "`n"
+          if ($text -notmatch "Windows Smoke") { throw "Validation Windows absente." }
 
       - name: Verify automatic catalog registration
         shell: pwsh
         run: |
           $output = & ./scripts/chess.ps1 list
           $output | Write-Host
-          if ($output -notmatch "student-win-smoke") { throw "Catalogue Windows incomplet." }
+          $text = $output -join "`n"
+          if ($text -notmatch "student-win-smoke") { throw "Catalogue Windows incomplet." }
 
       - name: Play isolated student duel
         shell: pwsh
