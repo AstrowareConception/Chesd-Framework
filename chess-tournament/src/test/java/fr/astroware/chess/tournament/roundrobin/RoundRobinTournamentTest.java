@@ -59,6 +59,61 @@ class RoundRobinTournamentTest {
     }
 
     @Test
+    void sameSeedProducesSameTournamentGamesAndRanking() {
+        List<TournamentParticipant> participants =
+            List.of(
+                new TournamentParticipant(
+                    "random",
+                    RandomBot::new
+                ),
+                new TournamentParticipant(
+                    "greedy",
+                    GreedyBot::new
+                ),
+                new TournamentParticipant(
+                    "cautious",
+                    CautiousBot::new
+                )
+            );
+
+        RoundRobinConfiguration configuration =
+            new RoundRobinConfiguration(
+                2,
+                10,
+                20260926L
+            );
+
+        RoundRobinTournament tournament =
+            new RoundRobinTournament();
+
+        RoundRobinResult first =
+            tournament.play(
+                participants,
+                configuration
+            );
+
+        RoundRobinResult second =
+            tournament.play(
+                participants,
+                configuration
+            );
+
+        assertEquals(
+            first.matches().stream()
+                .map(match -> match.moves())
+                .toList(),
+            second.matches().stream()
+                .map(match -> match.moves())
+                .toList()
+        );
+
+        assertEquals(
+            stableStandings(first),
+            stableStandings(second)
+        );
+    }
+
+    @Test
     void isolatedParticipantsCanPlayRoundRobin() {
         IsolatedBotSettings settings =
             new IsolatedBotSettings(
@@ -67,27 +122,42 @@ class RoundRobinTournamentTest {
                 64
             );
 
-        RoundRobinResult result =
-            new RoundRobinTournament().play(
-                List.of(
-                    TournamentParticipant.isolated(
-                        "random-a",
-                        RandomBot.class,
-                        new RandomBot().metadata(),
-                        settings
-                    ),
-                    TournamentParticipant.isolated(
-                        "random-b",
-                        RandomBot.class,
-                        new RandomBot().metadata(),
-                        settings
-                    )
+        List<TournamentParticipant> participants =
+            List.of(
+                TournamentParticipant.isolated(
+                    "random-a",
+                    RandomBot.class,
+                    new RandomBot().metadata(),
+                    settings
                 ),
-                new RoundRobinConfiguration(
-                    2,
-                    4,
-                    909L
+                TournamentParticipant.isolated(
+                    "random-b",
+                    RandomBot.class,
+                    new RandomBot().metadata(),
+                    settings
                 )
+            );
+
+        RoundRobinConfiguration configuration =
+            new RoundRobinConfiguration(
+                2,
+                4,
+                909L
+            );
+
+        RoundRobinTournament tournament =
+            new RoundRobinTournament();
+
+        RoundRobinResult result =
+            tournament.play(
+                participants,
+                configuration
+            );
+
+        RoundRobinResult repeated =
+            tournament.play(
+                participants,
+                configuration
             );
 
         assertEquals(2, result.matches().size());
@@ -100,6 +170,42 @@ class RoundRobinTournamentTest {
         result.standings().forEach(standing ->
             assertEquals(2, standing.played())
         );
+
+        assertEquals(
+            result.matches().stream()
+                .map(match -> match.moves())
+                .toList(),
+            repeated.matches().stream()
+                .map(match -> match.moves())
+                .toList()
+        );
+
+        assertEquals(
+            stableStandings(result),
+            stableStandings(repeated)
+        );
+    }
+
+    private static List<String> stableStandings(
+        RoundRobinResult result
+    ) {
+        return result.standings().stream()
+            .map(standing ->
+                standing.bot().botName()
+                    + "|"
+                    + standing.points()
+                    + "|"
+                    + standing.wins()
+                    + "|"
+                    + standing.draws()
+                    + "|"
+                    + standing.losses()
+                    + "|"
+                    + standing.forfeits()
+                    + "|"
+                    + standing.technicalDraws()
+            )
+            .toList();
     }
 
     @Test
