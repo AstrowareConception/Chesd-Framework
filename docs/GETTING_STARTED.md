@@ -775,3 +775,14 @@ Ce bot montre dans une seule classe :
 - un fallback.
 
 Il constitue un bon exemple de composition globale ; les situations tactiques avancées sont désormais également disponibles dans `Situations`.
+
+
+---
+
+## Dépannage
+
+En cas de problème d'installation, de compilation, de découverte du bot, de timeout ou de Pull Request refusée, consultez :
+
+```text
+docs/TROUBLESHOOTING.md
+```
