@@ -39,6 +39,10 @@ jobs:
           bash -n scripts/validate-student-submission.sh
           bash -n scripts/new-student-bot.sh
           bash -n scripts/chess.sh
+          bash -n scripts/test-student-submission-validator.sh
+
+      - name: Self-test student Pull Request validator
+        run: bash scripts/test-student-submission-validator.sh
 
       - name: Configure Java 25
         uses: actions/setup-java@v5
