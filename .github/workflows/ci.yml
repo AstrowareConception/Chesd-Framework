@@ -137,3 +137,22 @@ jobs:
       - name: Play isolated student duel
         shell: pwsh
         run: ./scripts/chess.ps1 console student-win-smoke random --isolated --max-plies=4 --timeout-ms=2000 --heap-mb=128
+
+      - name: Run isolated Windows mini tournament and exports
+        shell: pwsh
+        run: |
+          $pgn = Join-Path $env:RUNNER_TEMP "student-smoke.pgn"
+          $csv = Join-Path $env:RUNNER_TEMP "student-smoke.csv"
+
+          & ./scripts/chess.ps1 tournament student-win-smoke random --games=2 --isolated --max-plies=4 --timeout-ms=2000 --heap-mb=128 "--pgn=$pgn" "--csv=$csv"
+
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path $pgn)) { throw "PGN Windows absent." }
+          if (-not (Test-Path $csv)) { throw "CSV Windows absent." }
+          if ((Get-Item $pgn).Length -le 0) { throw "PGN Windows vide." }
+          if ((Get-Item $csv).Length -le 0) { throw "CSV Windows vide." }
+
+          $csvText = Get-Content $csv -Raw
+          if ($csvText -notmatch "Windows Smoke") {
+              throw "Le classement Windows ne contient pas le bot étudiant."
+          }
