@@ -9,7 +9,7 @@ Ce document regroupe les problèmes les plus fréquents lors de l'installation, 
 Le framework demande :
 
 - Java 25 ;
-- Maven ;
+- Maven 3.9.x ;
 - Git.
 
 Vérifiez :
@@ -20,7 +20,7 @@ mvn --version
 git --version
 ```
 
-La version Java active doit être **25**.
+La version Java active doit être **25** et Maven doit être une version **3.9.x**.
 
 Si Maven utilise un autre JDK que votre terminal, regardez la ligne `Java version` affichée par :
 
