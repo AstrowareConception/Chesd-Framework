@@ -48,6 +48,24 @@ package fr.astroware.chess.bots.students;
 
 Vous pouvez ajouter des classes auxiliaires dans ce package, mais **une seule classe de la Pull Request doit étendre `ChessBot`**.
 
+### Générateur recommandé
+
+Le dépôt fournit un générateur qui crée **la classe et son test** au bon endroit.
+
+Linux/macOS/Git Bash :
+
+```bash
+bash scripts/new-student-bot.sh DeepRabbitBot "Alice Dupont" "Deep Rabbit" "Bot positionnel et prudent."
+```
+
+Windows PowerShell :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/new-student-bot.ps1 DeepRabbitBot "Alice Dupont" "Deep Rabbit" "Bot positionnel et prudent."
+```
+
+Vous pouvez ensuite modifier les règles générées sans toucher au framework.
+
 ---
 
 ## 3. Squelette minimal
@@ -257,19 +275,16 @@ Ce contrôle statique complète l'isolation du tournoi ; il ne remplace pas la s
 mvn verify
 ```
 
-Cette commande doit être verte.
+Cette commande doit être verte. Elle compile les quatre modules, lance tous les tests et produit également :
 
-Pour tester également la commande de validation du tournoi, installez d'abord le reactor :
-
-```bash
-mvn install
+```text
+chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar
 ```
 
-Puis :
+Validez ensuite réellement les bots étudiants compilés :
 
 ```bash
-cd chess-tournament
-mvn exec:java -Dexec.args="validate-students"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
 ```
 
 Le validateur contrôle réellement les classes compilées :
@@ -300,7 +315,7 @@ student-deep-rabbit
 Vous pouvez vérifier :
 
 ```bash
-mvn exec:java -Dexec.args="list"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar list
 ```
 
 Aucune modification de `BotCatalog` n'est demandée à l'étudiant.
@@ -312,13 +327,13 @@ Aucune modification de `BotCatalog` n'est demandée à l'étudiant.
 Le mode recommandé est l'isolation JVM :
 
 ```bash
-mvn exec:java -Dexec.args="console student-deep-rabbit tactical --isolated"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar console student-deep-rabbit tactical --isolated
 ```
 
 Avec des limites explicites :
 
 ```bash
-mvn exec:java -Dexec.args="console student-deep-rabbit minimax --isolated --timeout-ms=3000 --heap-mb=256"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar console student-deep-rabbit minimax --isolated --timeout-ms=3000 --heap-mb=256
 ```
 
 Chaque bot tourne alors dans sa propre JVM.
@@ -330,7 +345,7 @@ Une décision qui dépasse le timeout entraîne un forfait au lieu de bloquer le
 ## 12. Faire un mini-tournoi local
 
 ```bash
-mvn exec:java -Dexec.args="tournament student-deep-rabbit random tactical --games=2 --isolated"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament student-deep-rabbit random tactical --games=2 --isolated
 ```
 
 Vous obtenez :
@@ -345,7 +360,7 @@ Vous obtenez :
 Vous pouvez également exporter :
 
 ```bash
-mvn exec:java -Dexec.args="tournament student-deep-rabbit random tactical --games=2 --isolated --pgn=parties.pgn --csv=classement.csv"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament student-deep-rabbit random tactical --games=2 --isolated --pgn=parties.pgn --csv=classement.csv
 ```
 
 ---
