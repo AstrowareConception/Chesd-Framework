@@ -156,6 +156,7 @@ Il obtient alors un bot au comportement différent sans réécrire le moteur.
 
 - [Bien démarrer](docs/GETTING_STARTED.md)
 - [Créer et soumettre son bot de tournoi](docs/STUDENT_TOURNAMENT_BOT.md)
+- [Dépannage étudiant](docs/TROUBLESHOOTING.md)
 - [Spécifications fonctionnelles et pédagogiques](docs/SPECIFICATIONS.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Évaluation des positions et des coups](docs/EVALUATION.md)
