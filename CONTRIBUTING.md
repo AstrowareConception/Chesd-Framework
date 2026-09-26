@@ -79,8 +79,10 @@ Avant une Pull Request :
 
 ```bash
 mvn verify
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
+bash scripts/chess.sh validate-students
 ```
+
+Sous Windows, utilisez `scripts/chess.ps1` à la place de `scripts/chess.sh`.
 
 Les situations ou actions personnalisées significatives doivent être accompagnées de tests.
 
