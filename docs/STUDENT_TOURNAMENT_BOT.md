@@ -466,3 +466,16 @@ Il n'y a pas de registre manuel à maintenir après chaque merge.
 - [ ] Ma Pull Request décrit clairement ma stratégie.
 
 À ce stade, votre bot est prêt à rejoindre le tournoi.
+
+
+---
+
+## 17. En cas de problème
+
+Consultez :
+
+```text
+docs/TROUBLESHOOTING.md
+```
+
+Vous y trouverez les procédures pour Java/Maven, PowerShell, un bot non détecté, les timeouts, les refus de CI et le débogage des positions FEN.
