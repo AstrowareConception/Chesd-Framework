@@ -10,8 +10,9 @@ Elle est volontairement distincte de la roadmap : les extensions futures — UCI
 
 - [x] dépôt GitHub public et clonable ;
 - [x] build Maven multi-module ;
+- [x] Java/Maven vérifiés automatiquement par Maven Enforcer ;
 - [x] Java 25 documenté ;
-- [x] Maven et Git documentés comme prérequis ;
+- [x] Maven 3.9.x et Git documentés comme prérequis ;
 - [x] `.editorconfig` multi-OS ;
 - [x] runner de tournoi autonome produit par `mvn verify` ;
 - [x] lanceur Bash indépendant de la version du JAR ;
