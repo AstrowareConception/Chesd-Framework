@@ -159,10 +159,8 @@ La CI doit reproduire le parcours d'un étudiant et rester verte.
 - [x] compiler et tester ;
 - [x] construire le runner ;
 - [x] valider le bot ;
-- [ ] vérifier le catalogue dans le job Windows ;
-- [ ] jouer le duel isolé dans le job Windows.
-
-Les deux dernières cases sont validées dès que le job Windows complet est vert.
+- [x] vérifier le catalogue dans le job Windows ;
+- [x] jouer le duel isolé dans le job Windows.
 
 ---
 
