@@ -28,7 +28,7 @@ class AdvancedTacticSituationTest {
             ChessRulesEngines.standard();
 
         PositionView position = engine.fromFen(
-            "q6k/8/8/8/8/8/1Q5K/R7 w - - 0 1"
+            "q7/7k/8/8/8/8/1Q5K/R7 w - - 0 1"
         );
 
         BotContext context =
@@ -71,7 +71,7 @@ class AdvancedTacticSituationTest {
             ChessRulesEngines.standard();
 
         PositionView position = engine.fromFen(
-            "q6k/8/8/8/n7/8/7K/1R6 w - - 0 1"
+            "q7/7k/8/8/n7/8/7K/1R6 w - - 0 1"
         );
 
         BotContext context =
