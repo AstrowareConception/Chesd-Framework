@@ -7,6 +7,8 @@ import fr.astroware.chess.bot.rule.Detection;
 import fr.astroware.chess.bot.rule.PresenceDetection;
 import fr.astroware.chess.bot.search.MinimaxSearch;
 import fr.astroware.chess.bot.search.SearchSettings;
+import fr.astroware.chess.bot.situation.detection.AttractionDetection;
+import fr.astroware.chess.bot.situation.detection.BatteryDetection;
 import fr.astroware.chess.bot.situation.detection.CaptureDetection;
 import fr.astroware.chess.bot.situation.detection.CastlingDetection;
 import fr.astroware.chess.bot.situation.detection.CenterImprovementDetection;
