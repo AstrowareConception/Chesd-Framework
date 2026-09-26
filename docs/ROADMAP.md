@@ -25,7 +25,9 @@ Déjà disponibles :
 - [x] bot exemple combinant ouvertures + plans + profil
 - [x] documentation étudiante progressive
 
-La priorité suivante est le **workflow étudiant de tournoi** : validation automatique des soumissions, documentation finale et gel du framework avant l'épreuve.
+La **V1 pédagogique est opérationnelle** : build, workflow étudiant Linux/Windows, validation des soumissions, tournoi isolé, documentation et procédure de gel sont en place.
+
+Les cases encore ouvertes ci-dessous sont des travaux d'amélioration ou des extensions et ne bloquent pas la remise aux étudiants.
 
 ---
 
@@ -272,7 +274,8 @@ Puis :
 - [x] validation automatique de la structure d'une soumission
 - [x] validation exécutable en JVM isolée
 - [x] découverte automatique des bots étudiants dans le catalogue
-- [ ] gel du framework avant tournoi
+- [x] procédure de gel documentée
+- [ ] gel effectif / tag de la promotion (à faire au moment choisi)
 
 ---
 
