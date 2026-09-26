@@ -98,8 +98,8 @@ Puis :
 
 ```bash
 mvn verify
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar list
+bash scripts/chess.sh validate-students
+bash scripts/chess.sh list
 ```
 
 ---
@@ -125,7 +125,7 @@ Contient les concepts fondamentaux du jeu :
 - case ;
 - coup ;
 - position ;
-- plus tard : moteur et état de partie.
+- moteur de règles complet, FEN/SAN/PGN et état de partie.
 
 Un bot ne devrait normalement pas y ajouter de logique stratégique.
 
@@ -146,7 +146,7 @@ La majorité des concepts intéressants pour votre stratégie se trouvent ici.
 
 Contient les bots.
 
-Vous y trouverez les adversaires de référence et, plus tard, les soumissions étudiantes.
+Vous y trouverez les adversaires de référence et le package réservé aux soumissions étudiantes.
 
 ### chess-tournament
 
@@ -328,7 +328,7 @@ Le bot doit aussi savoir :
 
 C'est le rôle de `Detection`.
 
-Une future détection pourra ressembler à :
+Une détection typée ressemble par exemple à :
 
 ```java
 public record ForkDetection(
@@ -518,25 +518,24 @@ Ce sera votre point de départ.
 
 ---
 
-## 16. Progression prévue
+## 16. Vocabulaire stratégique déjà disponible
 
-Au fur et à mesure du cours, le framework ajoutera notamment :
+Le framework fournit déjà :
 
-- analyse du matériel ;
-- attaquants et défenseurs ;
-- pièces pendues ;
-- prises rentables ;
-- échec ;
-- mat en un ;
-- fourchettes ;
-- clouages ;
-- enfilades ;
-- roque ;
-- développement ;
-- contrôle du centre ;
-- évaluation d'une position.
+- analyse du matériel, mobilité, centre et sécurité du roi ;
+- attaquants, défenseurs et pièces pendues ;
+- captures matérialistes ou sensibles au risque ;
+- échec, mat en un et évitement du mat ;
+- fourchettes, clouages, enfilades et double échec ;
+- attaque à la découverte, surcharge et élimination du défenseur ;
+- promotion et roque ;
+- développement et amélioration du contrôle du centre ;
+- structures de pions, colonnes ouvertes et pions passés ;
+- batteries, rayons X, opportunités de déviation et d'attraction ;
+- évaluation positionnelle, recherche à deux plis et Minimax/alpha-bêta ;
+- ouvertures, profils stratégiques et plans multi-coups.
 
-Vous pourrez remplacer progressivement votre règle aléatoire par de vraies décisions.
+Votre travail consiste donc surtout à **composer, ordonner, pondérer et étendre** ces briques pour donner une identité à votre bot.
 
 ---
 
@@ -604,7 +603,7 @@ Avant le rendu final :
 
 ```bash
 mvn verify
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
+bash scripts/chess.sh validate-students
 ```
 
 ---
@@ -623,9 +622,9 @@ java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar val
 - chaque candidat peut recevoir une note de 0 à 10 ;
 - le framework vérifie la légalité puis retient le meilleur candidat ;
 - les règles sont testées dans l'ordre ;
-- le tournoi sera reproductible et automatisable.
+- le tournoi est reproductible, automatisable et protégé par isolation JVM.
 
-La suite du projet consistera à enrichir le vocabulaire disponible pour que vous puissiez écrire des comportements de plus en plus intéressants.
+Vous pouvez maintenant enrichir ce vocabulaire avec vos propres situations, actions, évaluateurs et plans, tout en conservant le contrat du framework.
 
 
 ---
@@ -775,4 +774,4 @@ Ce bot montre dans une seule classe :
 - plusieurs plans ;
 - un fallback.
 
-Il constitue le meilleur exemple actuel avant l'arrivée des situations tactiques avancées.
+Il constitue un bon exemple de composition globale ; les situations tactiques avancées sont désormais également disponibles dans `Situations`.
