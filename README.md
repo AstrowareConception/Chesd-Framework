@@ -119,7 +119,7 @@ public final class MyBot extends ChessBot {
     @Override
     protected List<Rule<?>> rules() {
         return List.of(
-            // Les règles tactiques critiques viendront ici.
+            // Les règles tactiques critiques peuvent être placées ici.
 
             Openings.londonSystem().asRule(),
             Openings.scandinavianDefense().asRule(),
@@ -157,6 +157,8 @@ Il obtient alors un bot au comportement différent sans réécrire le moteur.
 - [Bien démarrer](docs/GETTING_STARTED.md)
 - [Créer et soumettre son bot de tournoi](docs/STUDENT_TOURNAMENT_BOT.md)
 - [Dépannage étudiant](docs/TROUBLESHOOTING.md)
+- [Checklist V1 — prêt étudiant](docs/STUDENT_READY_CHECKLIST.md)
+- [Procédure de gel du framework](docs/FRAMEWORK_FREEZE.md)
 - [Spécifications fonctionnelles et pédagogiques](docs/SPECIFICATIONS.md)
 - [Architecture cible](docs/ARCHITECTURE.md)
 - [Évaluation des positions et des coups](docs/EVALUATION.md)
@@ -209,30 +211,25 @@ Déjà disponibles :
 
 La couche d'analyse dispose désormais de la **projection après un coup**. Mat en un et fourchette sont déjà détectés par simulation réelle. Le catalogue couvre désormais mat en un, sortie d'échec, fourchette, clouage, enfilade, double échec, attaque à la découverte et surcharge d'un défenseur. Le framework sait aussi adapter une stratégie à l'ouverture, au milieu de jeu et à la finale.
 
-## Bots de référence prévus pour le tournoi
+## Bots de référence
 
-1. **RandomBot** — joue un coup légal aléatoire.
-2. **GreedyBot** — privilégie les gains matériels immédiats.
-3. **TacticalBot** — exploite plusieurs motifs tactiques simples.
+Le framework fournit plusieurs styles d'adversaires : aléatoire, matérialiste, prudent, offensif, défensif, tactique, positionnel, recherche à deux plis et Minimax.
 
-`SolidPlannerBot` est actuellement un exemple pédagogique supplémentaire destiné à illustrer les ouvertures, les plans et les profils.
+La commande suivante donne la liste exacte, y compris les bots étudiants compilés :
+
+```bash
+bash scripts/chess.sh list
+```
+
+Voir [docs/REFERENCE_BOTS.md](docs/REFERENCE_BOTS.md) pour le rôle pédagogique de chaque bot.
 
 ## Tournoi final
 
-Le format initial visé est un tournoi toutes rondes avec alternance des couleurs.
+Le moteur de tournoi est opérationnel en toutes rondes avec alternance des couleurs, seed reproductible, isolation JVM, timeout dur, plafond mémoire, forfaits structurés et exports PGN/CSV.
 
-Le moteur devra enregistrer :
+Il enregistre les résultats, les coups, les temps de décision, les traces de décision et le classement final.
 
-- résultats ;
-- coups ;
-- temps de décision ;
-- traces des règles ;
-- candidats envisagés ;
-- raisons du choix ;
-- parties au format PGN ;
-- classement final.
-
-Les étudiants soumettront leur bot par Pull Request afin de pratiquer également le workflow GitHub.
+Les bots étudiants sont soumis par Pull Request. Leur périmètre, leurs tests et leur capacité à jouer en JVM isolée sont contrôlés automatiquement par la CI.
 
 
 ## Lancer un duel
