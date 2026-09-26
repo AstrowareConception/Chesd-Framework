@@ -76,6 +76,32 @@ Cette commande :
 
 Avant toute Pull Request, cette commande doit fonctionner.
 
+Elle produit aussi le runner autonome :
+
+```text
+chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar
+```
+
+Pour générer immédiatement un squelette de bot et son test :
+
+```bash
+bash scripts/new-student-bot.sh DeepRabbitBot "Alice Dupont" "Deep Rabbit"
+```
+
+Sous PowerShell :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/new-student-bot.ps1 DeepRabbitBot "Alice Dupont" "Deep Rabbit"
+```
+
+Puis :
+
+```bash
+mvn verify
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar list
+```
+
 ---
 
 ## 3. Comprendre les quatre modules
@@ -124,7 +150,7 @@ Vous y trouverez les adversaires de référence et, plus tard, les soumissions �
 
 ### chess-tournament
 
-Contiendra le moteur permettant d'organiser les matchs et le tournoi final.
+Contient le moteur de matchs, le round-robin, les exports PGN/CSV, le viewer Swing, l'isolation JVM et le CLI étudiant.
 
 ---
 
@@ -578,9 +604,7 @@ Avant le rendu final :
 
 ```bash
 mvn verify
-mvn install
-cd chess-tournament
-mvn exec:java -Dexec.args="validate-students"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
 ```
 
 ---
