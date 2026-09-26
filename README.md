@@ -4,7 +4,7 @@ Framework pédagogique Java destiné à la création de bots d'échecs et à l'o
 
 ## Quick start étudiant
 
-Prérequis : **Java 25**, **Maven** et **Git**.
+Prérequis : **Java 25**, **Maven 3.9.x** et **Git**.
 
 ```bash
 git clone https://github.com/AstrowareConception/Chess-Framework.git
