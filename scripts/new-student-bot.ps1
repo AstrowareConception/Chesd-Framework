@@ -23,7 +23,18 @@ if ([string]::IsNullOrWhiteSpace($Author) -or [string]::IsNullOrWhiteSpace($BotN
 }
 
 function Escape-JavaString([string]$Value) {
-    return $Value.Replace('', '\').Replace('"', '"')
+    $slash = [string][char]92
+    $quote = [string][char]34
+
+    $escaped = $Value.Replace(
+        $slash,
+        $slash + $slash
+    )
+
+    return $escaped.Replace(
+        $quote,
+        $slash + $quote
+    )
 }
 
 $authorEscaped = Escape-JavaString $Author
