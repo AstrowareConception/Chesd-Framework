@@ -144,9 +144,6 @@ public final class RoundRobinTournament {
                         .thenComparingInt(
                             TournamentStanding::technicalDraws
                         )
-                        .thenComparingDouble(
-                            TournamentStanding::averageDecisionMillis
-                        )
                         .thenComparing(
                             standing ->
                                 standing.bot().botName()
