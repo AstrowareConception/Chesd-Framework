@@ -196,11 +196,11 @@ Puis :
 - attaque à la découverte — [x]
 - double échec — [x]
 - surcharge — [x]
-- déviation
-- attraction
+- déviation — [x]
+- attraction — [x]
 - élimination du défenseur surchargé — [x]
-- batterie
-- rayon X
+- batterie — [x]
+- rayon X — [x]
 - pion passé — [x]
 - pion isolé — [x]
 - pion doublé — [x]
@@ -285,8 +285,9 @@ Puis :
 - [x] canal loopback authentifié par jeton de session
 - [x] stdout/stderr étudiant séparé du protocole
 - [x] contrôle des dépendances de soumission (périmètre PR gelé)
-- [ ] limitation réseau/disque
-- [ ] reproductibilité complète
+- [x] garde-fous réseau/disque/processus/réflexion sur les soumissions
+- [ ] sandbox OS réseau/disque pour environnement hostile (extension)
+- [x] reproductibilité complète
 - [x] rapport d'incident
 
 ---
