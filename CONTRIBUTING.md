@@ -28,6 +28,18 @@ git switch -c bot/ada-lovelace
 
 ### 2. Ajouter le bot
 
+Vous pouvez créer automatiquement le squelette et son test :
+
+```bash
+bash scripts/new-student-bot.sh AdaLovelaceBot "Ada Lovelace" "Analytical Engine"
+```
+
+Sous Windows PowerShell :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/new-student-bot.ps1 AdaLovelaceBot "Ada Lovelace" "Analytical Engine"
+```
+
 Emplacement cible :
 
 ```text
@@ -67,9 +79,7 @@ Avant une Pull Request :
 
 ```bash
 mvn verify
-mvn install
-cd chess-tournament
-mvn exec:java -Dexec.args="validate-students"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
 ```
 
 Les situations ou actions personnalisées significatives doivent être accompagnées de tests.
