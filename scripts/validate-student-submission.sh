@@ -80,23 +80,23 @@ for file in "${STUDENT_MAIN_FILES[@]}"; do
   # Contrôle statique volontairement simple : l'isolation JVM reste la
   # protection d'exécution, mais une soumission pédagogique n'a aucune raison
   # d'utiliser directement le réseau, le disque, les processus ou la réflexion.
-  if grep -Eq '^import[[:space:]]+java\.net\.' "$file"; then
+  if grep -Eq '(^import[[:space:]]+java\.net\.)|java\.net\.' "$file"; then
     echo "::error file=$file::Les API réseau java.net sont interdites dans un bot étudiant."
     exit 1
   fi
 
-  if grep -Eq '^import[[:space:]]+java\.nio\.file\.' "$file"; then
+  if grep -Eq '(^import[[:space:]]+java\.nio\.file\.)|java\.nio\.file\.' "$file"; then
     echo "::error file=$file::Les API d'accès fichiers java.nio.file sont interdites dans un bot étudiant."
     exit 1
   fi
 
-  if grep -Eq '^import[[:space:]]+java\.lang\.reflect\.' "$file"; then
-    echo "::error file=$file::La réflexion Java est interdite dans un bot étudiant."
+  if grep -Eq '(^import[[:space:]]+java\.io\.)|java\.io\.' "$file"; then
+    echo "::error file=$file::Les API java.io sont interdites dans un bot étudiant."
     exit 1
   fi
 
-  if grep -Eq '^import[[:space:]]+java\.io\.(File|FileInputStream|FileOutputStream|FileReader|FileWriter|RandomAccessFile);' "$file"; then
-    echo "::error file=$file::L'accès direct aux fichiers est interdit dans un bot étudiant."
+  if grep -Eq '(^import[[:space:]]+java\.lang\.reflect\.)|java\.lang\.reflect\.|Class\.forName[[:space:]]*\(|\.getDeclared(Field|Method|Constructor)s?[[:space:]]*\(|\.setAccessible[[:space:]]*\(|MethodHandles|Unsafe' "$file"; then
+    echo "::error file=$file::La réflexion et les API de contournement sont interdites dans un bot étudiant."
     exit 1
   fi
 
