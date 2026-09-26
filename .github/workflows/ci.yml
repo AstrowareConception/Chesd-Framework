@@ -38,6 +38,7 @@ jobs:
         run: |
           bash -n scripts/validate-student-submission.sh
           bash -n scripts/new-student-bot.sh
+          bash -n scripts/chess.sh
 
       - name: Configure Java 25
         uses: actions/setup-java@v5
@@ -49,8 +50,8 @@ jobs:
       - name: Verify
         run: mvn --batch-mode --no-transfer-progress verify
 
-  student-workflow:
-    name: Student workflow smoke test
+  student-workflow-linux:
+    name: Student workflow — Linux
     runs-on: ubuntu-latest
 
     steps:
@@ -65,40 +66,68 @@ jobs:
           cache: maven
 
       - name: Scaffold a student bot
-        run: |
-          bash scripts/new-student-bot.sh             CiSmokeBot             "CI Student"             "CI Smoke"             "Bot généré par le smoke-test du parcours étudiant."
+        run: bash scripts/new-student-bot.sh CiSmokeBot "CI Student" "CI Smoke" "Bot généré par le smoke-test du parcours étudiant."
 
       - name: Build student bot and executable runner
         run: mvn --batch-mode --no-transfer-progress verify
 
-      - name: Locate executable runner
-        id: runner
-        shell: bash
-        run: |
-          set -euo pipefail
-          JAR="$(find chess-tournament/target -maxdepth 1 -name 'chess-tournament-*-runner.jar' -print -quit)"
-          test -n "$JAR"
-          test -s "$JAR"
-          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
-
       - name: Validate generated student bot
         run: |
-          java -jar "${{ steps.runner.outputs.jar }}" validate-students             | tee /tmp/validate-students.txt
+          bash scripts/chess.sh validate-students | tee /tmp/validate-students.txt
           grep -q "CI Smoke" /tmp/validate-students.txt
 
       - name: Verify automatic catalog registration
         run: |
-          java -jar "${{ steps.runner.outputs.jar }}" list             | tee /tmp/bot-list.txt
+          bash scripts/chess.sh list | tee /tmp/bot-list.txt
           grep -q "student-ci-smoke" /tmp/bot-list.txt
 
       - name: Play isolated student duel
-        run: |
-          java -jar "${{ steps.runner.outputs.jar }}"             console student-ci-smoke random             --isolated             --max-plies=4             --timeout-ms=2000             --heap-mb=128
+        run: bash scripts/chess.sh console student-ci-smoke random --isolated --max-plies=4 --timeout-ms=2000 --heap-mb=128
 
       - name: Run isolated mini tournament and exports
         run: |
-          java -jar "${{ steps.runner.outputs.jar }}"             tournament student-ci-smoke random             --games=2             --isolated             --max-plies=4             --timeout-ms=2000             --heap-mb=128             --pgn=/tmp/student-smoke.pgn             --csv=/tmp/student-smoke.csv
-
+          bash scripts/chess.sh tournament student-ci-smoke random --games=2 --isolated --max-plies=4 --timeout-ms=2000 --heap-mb=128 --pgn=/tmp/student-smoke.pgn --csv=/tmp/student-smoke.csv
           test -s /tmp/student-smoke.pgn
           test -s /tmp/student-smoke.csv
           grep -q "CI Smoke" /tmp/student-smoke.csv
+
+  student-workflow-windows:
+    name: Student workflow — Windows
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Java 25
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Scaffold a student bot
+        shell: pwsh
+        run: ./scripts/new-student-bot.ps1 WinSmokeBot "CI Windows Student" "Windows Smoke" "Bot généré par le smoke-test Windows."
+
+      - name: Build student bot and executable runner
+        shell: pwsh
+        run: mvn --batch-mode --no-transfer-progress verify
+
+      - name: Validate generated student bot
+        shell: pwsh
+        run: |
+          $output = & ./scripts/chess.ps1 validate-students
+          $output | Write-Host
+          if ($output -notmatch "Windows Smoke") { throw "Validation Windows absente." }
+
+      - name: Verify automatic catalog registration
+        shell: pwsh
+        run: |
+          $output = & ./scripts/chess.ps1 list
+          $output | Write-Host
+          if ($output -notmatch "student-win-smoke") { throw "Catalogue Windows incomplet." }
+
+      - name: Play isolated student duel
+        shell: pwsh
+        run: ./scripts/chess.ps1 console student-win-smoke random --isolated --max-plies=4 --timeout-ms=2000 --heap-mb=128
