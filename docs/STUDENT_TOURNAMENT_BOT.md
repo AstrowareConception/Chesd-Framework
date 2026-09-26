@@ -4,6 +4,8 @@ Ce guide décrit le workflow complet d'une **soumission étudiante** : création
 
 L'objectif est qu'une soumission valide ne nécessite **aucune modification manuelle du framework** après son merge.
 
+Les exemples de lancement utilisent Bash. Sous Windows, remplacez `bash scripts/chess.sh` par `powershell -ExecutionPolicy Bypass -File scripts/chess.ps1`.
+
 ---
 
 ## 1. Créer sa branche
@@ -284,7 +286,7 @@ chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar
 Validez ensuite réellement les bots étudiants compilés :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
+bash scripts/chess.sh validate-students
 ```
 
 Le validateur contrôle réellement les classes compilées :
@@ -315,7 +317,7 @@ student-deep-rabbit
 Vous pouvez vérifier :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar list
+bash scripts/chess.sh list
 ```
 
 Aucune modification de `BotCatalog` n'est demandée à l'étudiant.
@@ -327,13 +329,13 @@ Aucune modification de `BotCatalog` n'est demandée à l'étudiant.
 Le mode recommandé est l'isolation JVM :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar console student-deep-rabbit tactical --isolated
+bash scripts/chess.sh console student-deep-rabbit tactical --isolated
 ```
 
 Avec des limites explicites :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar console student-deep-rabbit minimax --isolated --timeout-ms=3000 --heap-mb=256
+bash scripts/chess.sh console student-deep-rabbit minimax --isolated --timeout-ms=3000 --heap-mb=256
 ```
 
 Chaque bot tourne alors dans sa propre JVM.
@@ -345,7 +347,7 @@ Une décision qui dépasse le timeout entraîne un forfait au lieu de bloquer le
 ## 12. Faire un mini-tournoi local
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament student-deep-rabbit random tactical --games=2 --isolated
+bash scripts/chess.sh tournament student-deep-rabbit random tactical --games=2 --isolated
 ```
 
 Vous obtenez :
@@ -360,7 +362,7 @@ Vous obtenez :
 Vous pouvez également exporter :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament student-deep-rabbit random tactical --games=2 --isolated --pgn=parties.pgn --csv=classement.csv
+bash scripts/chess.sh tournament student-deep-rabbit random tactical --games=2 --isolated --pgn=parties.pgn --csv=classement.csv
 ```
 
 ---
