@@ -2,6 +2,43 @@
 
 Framework pédagogique Java destiné à la création de bots d'échecs et à l'organisation de tournois entre étudiants.
 
+## Quick start étudiant
+
+Prérequis : **Java 25**, **Maven** et **Git**.
+
+```bash
+git clone https://github.com/AstrowareConception/Chess-Framework.git
+cd Chess-Framework
+```
+
+Créer automatiquement son bot sous Linux/macOS/Git Bash :
+
+```bash
+bash scripts/new-student-bot.sh DeepRabbitBot "Alice Dupont" "Deep Rabbit"
+```
+
+Sous Windows PowerShell :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/new-student-bot.ps1 DeepRabbitBot "Alice Dupont" "Deep Rabbit"
+```
+
+Compiler, tester et produire le runner autonome :
+
+```bash
+mvn verify
+```
+
+Puis valider et lancer le bot :
+
+```bash
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar list
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar console student-deep-rabbit random --isolated
+```
+
+Le guide complet est dans [docs/STUDENT_TOURNAMENT_BOT.md](docs/STUDENT_TOURNAMENT_BOT.md).
+
 ## Vision
 
 Le projet fournit un moteur de jeu fiable et une API orientée objet permettant à un étudiant de créer son propre joueur d'échecs en étendant `ChessBot`.
@@ -197,35 +234,34 @@ Les étudiants soumettront leur bot par Pull Request afin de pratiquer égalemen
 
 ## Lancer un duel
 
-Après une première installation Maven :
+Après `mvn verify`, le projet produit un runner autonome :
 
-```bash
-mvn install
-cd chess-tournament
+```text
+chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar
 ```
 
 Lister les bots :
 
 ```bash
-mvn exec:java -Dexec.args="list"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar list
 ```
 
 Suivre une partie en console :
 
 ```bash
-mvn exec:java -Dexec.args="console tactical cautious"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar console tactical cautious
 ```
 
 Exporter un PGN :
 
 ```bash
-mvn exec:java -Dexec.args="pgn tactical guardian partie.pgn"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar pgn tactical guardian partie.pgn
 ```
 
 Ouvrir le viewer graphique :
 
 ```bash
-mvn exec:java -Dexec.args="gui architect tactical"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar gui architect tactical
 ```
 
 Voir `docs/INTERFACES.md` pour le détail.
@@ -234,14 +270,13 @@ Voir `docs/INTERFACES.md` pour le détail.
 ### Lancer un tournoi
 
 ```bash
-cd chess-tournament
-mvn exec:java -Dexec.args="tournament positional lookahead minimax --games=2"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament positional lookahead minimax --games=2
 ```
 
 Avec exports :
 
 ```bash
-mvn exec:java -Dexec.args="tournament tactical positional minimax --pgn=parties.pgn --csv=classement.csv"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament tactical positional minimax --pgn=parties.pgn --csv=classement.csv
 ```
 
 Voir `docs/TOURNAMENT.md`.
@@ -250,8 +285,7 @@ Voir `docs/TOURNAMENT.md`.
 ### Exécution isolée recommandée pour le tournoi
 
 ```bash
-cd chess-tournament
-mvn exec:java -Dexec.args="tournament positional lookahead minimax --games=2 --isolated --timeout-ms=3000 --heap-mb=256"
+java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament positional lookahead minimax --games=2 --isolated --timeout-ms=3000 --heap-mb=256
 ```
 
 En mode isolé, chaque bot tourne dans une JVM enfant. Une décision qui dépasse le timeout provoque un forfait sans bloquer le tournoi.
