@@ -126,13 +126,14 @@ Le rapport console affiche notamment :
 
 `F` signifie **défaite par forfait** et `NT` signifie **nulle technique**.
 
-Les égalités sont actuellement départagées de manière déterministe par :
+Les égalités sont départagées de manière déterministe par :
 
 1. points ;
 2. nombre de victoires ;
 3. nombre de nulles techniques ;
-4. temps moyen de décision ;
-5. nom du bot.
+4. nom du bot.
+
+Le temps moyen reste affiché comme **statistique de performance**, mais n'intervient pas dans le classement : deux exécutions identiques ne doivent pas changer d'ordre simplement parce qu'une machine est plus rapide qu'une autre.
 
 Ces critères pourront être remplacés plus tard par de vrais départages échiquéens si nécessaire.
 
@@ -485,3 +486,27 @@ Le workflow de Pull Request contrôle déjà le périmètre des fichiers, bloque
 Pour un environnement réellement hostile, des restrictions système supplémentaires — conteneurisation ou sandbox OS — resteraient nécessaires.
 
 Pour un contexte pédagogique où les Pull Requests sont relues et passent la CI, le mécanisme actuel protège déjà le tournoi contre les erreurs, blocages et boucles infinies ordinaires.
+
+
+---
+
+## 18. Reproductibilité
+
+Le moteur dérive une seed déterministe pour chaque partie du tournoi.
+
+À configuration identique :
+
+- mêmes participants dans le même ordre ;
+- même nombre de parties ;
+- même limite de demi-coups ;
+- même seed ;
+
+les séquences de coups pseudo-aléatoires sont identiques.
+
+La CI vérifie cette propriété :
+
+- en exécution locale ;
+- avec des bots exécutés dans des JVM isolées ;
+- sur un tournoi toutes rondes.
+
+Les temps de décision ne participent pas aux départages afin de ne pas introduire de dépendance à la vitesse de la machine.
