@@ -32,10 +32,12 @@ mvn verify
 Puis valider et lancer le bot :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar list
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar console student-deep-rabbit random --isolated
+bash scripts/chess.sh validate-students
+bash scripts/chess.sh list
+bash scripts/chess.sh console student-deep-rabbit random --isolated
 ```
+
+Sous Windows, remplacez `bash scripts/chess.sh` par `powershell -ExecutionPolicy Bypass -File scripts/chess.ps1`.
 
 Le guide complet est dans [docs/STUDENT_TOURNAMENT_BOT.md](docs/STUDENT_TOURNAMENT_BOT.md).
 
@@ -92,8 +94,8 @@ L'objectif pédagogique est de pratiquer la programmation orientée objet, l'hé
 - **JaCoCo**
 - **GitHub Actions**
 - moteur de règles d'échecs masqué derrière une interface interne
-- CLI de tournoi dans un premier temps
-- export PGN et rapports de tournoi à terme
+- CLI de duel et de tournoi, plus viewer Swing
+- exports PGN/CSV, rapports de tournoi et replay
 
 ## Exemple de bot stratégique
 
@@ -243,25 +245,25 @@ chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar
 Lister les bots :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar list
+bash scripts/chess.sh list
 ```
 
 Suivre une partie en console :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar console tactical cautious
+bash scripts/chess.sh console tactical cautious
 ```
 
 Exporter un PGN :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar pgn tactical guardian partie.pgn
+bash scripts/chess.sh pgn tactical guardian partie.pgn
 ```
 
 Ouvrir le viewer graphique :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar gui architect tactical
+bash scripts/chess.sh gui architect tactical
 ```
 
 Voir `docs/INTERFACES.md` pour le détail.
@@ -270,13 +272,13 @@ Voir `docs/INTERFACES.md` pour le détail.
 ### Lancer un tournoi
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament positional lookahead minimax --games=2
+bash scripts/chess.sh tournament positional lookahead minimax --games=2
 ```
 
 Avec exports :
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament tactical positional minimax --pgn=parties.pgn --csv=classement.csv
+bash scripts/chess.sh tournament tactical positional minimax --pgn=parties.pgn --csv=classement.csv
 ```
 
 Voir `docs/TOURNAMENT.md`.
@@ -285,7 +287,7 @@ Voir `docs/TOURNAMENT.md`.
 ### Exécution isolée recommandée pour le tournoi
 
 ```bash
-java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar tournament positional lookahead minimax --games=2 --isolated --timeout-ms=3000 --heap-mb=256
+bash scripts/chess.sh tournament positional lookahead minimax --games=2 --isolated --timeout-ms=3000 --heap-mb=256
 ```
 
 En mode isolé, chaque bot tourne dans une JVM enfant. Une décision qui dépasse le timeout provoque un forfait sans bloquer le tournoi.
