@@ -138,9 +138,8 @@ Test créé :
 
 Étapes suivantes :
   1. mvn verify
-  2. mvn package
-  3. java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar validate-students
-  3. java -jar chess-tournament/target/chess-tournament-0.1.0-SNAPSHOT-runner.jar list
+  2. bash scripts/chess.sh validate-students
+  3. bash scripts/chess.sh list
 
 La clé CLI sera générée automatiquement à partir du nom de classe.
 EOF
