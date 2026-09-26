@@ -15,34 +15,32 @@ Les trois modes utilisent le même `MatchRunner`.
 À la racine du dépôt :
 
 ```bash
-mvn install
+mvn verify
 ```
 
-Puis placez-vous dans :
+Cette commande compile, teste et produit le runner autonome.
 
-```text
-chess-tournament
+Les exemples ci-dessous utilisent le lanceur Bash :
+
+```bash
+bash scripts/chess.sh ...
 ```
 
-Le module est configuré avec `exec-maven-plugin` et peut lancer directement `ChessFrameworkCli`.
+Sous Windows PowerShell, utilisez la même commande avec :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/chess.ps1 ...
+```
 
 ---
 
 ## 2. Afficher les bots disponibles
 
 ```bash
-mvn exec:java -Dexec.args="list"
+bash scripts/chess.sh list
 ```
 
-Bots actuellement fournis :
-
-- random ;
-- greedy ;
-- cautious ;
-- berserker ;
-- guardian ;
-- tactical ;
-- architect.
+La commande affiche tous les bots de référence ainsi que les bots étudiants découverts automatiquement dans le package `students`.
 
 ---
 
@@ -51,7 +49,7 @@ Bots actuellement fournis :
 Exemple :
 
 ```bash
-mvn exec:java -Dexec.args="console tactical cautious"
+bash scripts/chess.sh console tactical cautious
 ```
 
 Le terminal affiche pour chaque demi-coup :
@@ -88,7 +86,7 @@ Exemple conceptuel :
 Une seed peut être imposée :
 
 ```bash
-mvn exec:java -Dexec.args="console tactical random --seed=123"
+bash scripts/chess.sh console tactical random --seed=123
 ```
 
 Les choix aléatoires seront alors reproductibles.
@@ -96,7 +94,7 @@ Les choix aléatoires seront alors reproductibles.
 Une limite technique peut également être fixée :
 
 ```bash
-mvn exec:java -Dexec.args="console random random --max-plies=100"
+bash scripts/chess.sh console random random --max-plies=100
 ```
 
 ---
@@ -106,13 +104,13 @@ mvn exec:java -Dexec.args="console random random --max-plies=100"
 Vers la console :
 
 ```bash
-mvn exec:java -Dexec.args="pgn tactical guardian"
+bash scripts/chess.sh pgn tactical guardian
 ```
 
 Vers un fichier :
 
 ```bash
-mvn exec:java -Dexec.args="pgn tactical guardian partie.pgn"
+bash scripts/chess.sh pgn tactical guardian partie.pgn
 ```
 
 Le PGN contient notamment :
@@ -138,7 +136,7 @@ Le fichier peut ensuite être ouvert dans un viewer PGN compatible.
 ## 6. Viewer graphique
 
 ```bash
-mvn exec:java -Dexec.args="gui architect tactical"
+bash scripts/chess.sh gui architect tactical
 ```
 
 Le viewer affiche :
@@ -236,13 +234,13 @@ Le même résultat sert à la console, au PGN et au viewer graphique.
 Le CLI permet aussi un tournoi toutes rondes :
 
 ```bash
-mvn exec:java -Dexec.args="tournament random greedy tactical"
+bash scripts/chess.sh tournament random greedy tactical
 ```
 
 Tous les bots :
 
 ```bash
-mvn exec:java -Dexec.args="tournament --all"
+bash scripts/chess.sh tournament --all
 ```
 
 Options principales :
